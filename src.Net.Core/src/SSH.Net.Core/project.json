@@ -1,5 +1,5 @@
 ﻿{
-    "authors": [ "khamzatsalikhov" ],
+    "authors": [ "Khamzat Salikhov" ],
     "dependencies": {
         "Microsoft.CSharp": "4.0.1-rc2-23910",
         "Microsoft.NETCore.Portable.Compatibility": "1.0.1-rc2-23910",
@@ -15,13 +15,14 @@
         "System.Xml.XmlDocument": "4.0.1-rc2-23910",
         "System.Xml.XPath.XmlDocument": "4.0.1-rc2-23910"
     },
-    "description": "Renci.SshNet.NetCore Console Application",
+    "description": "Fork from sshnet/SSH.NET (https://www.nuget.org/packages/SSH.NET/2014.4.6-beta2) but for .Net Core",
     "frameworks": {
         "dnxcore50": {
         }
     },
     "licenseUrl": "",
-    "projectUrl": "",
-    "tags": [ "" ],
-    "version": "1.0.0-*"
+    "projectUrl": "https://github.com/pelhu/SSH.NET.Core",
+    "tags": [ ".net.core", "ssh", "ssh.net" ],
+    "version": "0.9.0-rc-*",
+    "title": "SSH.Net.Core"
 }

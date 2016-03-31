@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0-*",
   "description": "test Console Application",
   "authors": [ "khamzatsalikhov" ],
@@ -17,7 +17,7 @@
     "dependencies": {
         "NETStandard.Library": "1.0.0-rc2-23910",
         "Microsoft.NETCore.Portable.Compatibility": "1.0.1-rc2-23910",
-        "SSHNet.Core": "1.0.0-*"
+        "SSH.Net.Core": "0.9.0-rc-*"
     },
 
     "frameworks": {
