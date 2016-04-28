@@ -17,12 +17,12 @@ namespace Renci.SshNet
         private const byte CarriageReturn = 0x0d;
         private const byte LineFeed = 0x0a;
 
-//        private readonly TraceSource _log =
-//#if DEBUG
-//            new TraceSource("SshNet.Logging", SourceLevels.All);
-//#else
-//            new TraceSource("SshNet.Logging");
-//#endif
+        //        private readonly TraceSource _log =
+        //#if DEBUG
+        //            new TraceSource("SshNet.Logging", SourceLevels.All);
+        //#else
+        //            new TraceSource("SshNet.Logging");
+        //#endif
 
         /// <summary>
         /// Holds the lock object to ensure read access to the socket is synchronized.
@@ -111,17 +111,19 @@ namespace Renci.SshNet
 
             Log(string.Format("Initiating connect to '{0}:{1}'.", ConnectionInfo.Host, ConnectionInfo.Port));
 
+#if NET46
+            var connectResult = _socket.BeginConnect(ep, null, null);
+            if (!connectResult.AsyncWaitHandle.WaitOne(timeout, false))
+                throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
+                    "Connection failed to establish within {0:F0} milliseconds.", timeout.TotalMilliseconds));
+
+            _socket.EndConnect(connectResult);
+#else
             var connectResult = _socket.ConnectAsync(ep.Address, ep.Port);
             if (!connectResult.Wait(timeout))
                 throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
                     "Connection failed to establish within {0:F0} milliseconds.", timeout.TotalMilliseconds));
-
-            //var connectResult = _socket.BeginConnect(ep, null, null);
-            //if (!connectResult.AsyncWaitHandle.WaitOne(timeout, false))
-            //    throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
-            //        "Connection failed to establish within {0:F0} milliseconds.", timeout.TotalMilliseconds));
-
-            //_socket.EndConnect(connectResult);
+#endif
         }
 
         /// <summary>
@@ -144,31 +146,40 @@ namespace Renci.SshNet
         {
             var encoding = new ASCIIEncoding();
             var buffer = new List<byte>();
+#if NET46
+            var data = new byte[1];
+#else
             var data = new ArraySegment<byte>(new byte[1]);
-
+#endif
             // read data one byte at a time to find end of line and leave any unhandled information in the buffer
             // to be processed by subsequent invocations
             do
             {
+#if NET46
+                var asyncResult = _socket.BeginReceive(data, 0, data.Length, SocketFlags.None, null, null);
+                if (!asyncResult.AsyncWaitHandle.WaitOne(timeout))
+                    throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
+                        "Socket read operation has timed out after {0:F0} milliseconds.", timeout.TotalMilliseconds));
+
+                var received = _socket.EndReceive(asyncResult);
+#else
                 var asyncResult = _socket.ReceiveAsync(data, SocketFlags.None);
                 if (!asyncResult.Wait(timeout))
                     throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
                         "Socket read operation has timed out after {0:F0} milliseconds.", timeout.TotalMilliseconds));
 
                 var received = asyncResult.Result;
-
-                //var asyncResult = _socket.BeginReceive(data, 0, data.Length, SocketFlags.None, null, null);
-                //if (!asyncResult.AsyncWaitHandle.WaitOne(timeout))
-                //    throw new SshOperationTimeoutException(string.Format(CultureInfo.InvariantCulture,
-                //        "Socket read operation has timed out after {0:F0} milliseconds.", timeout.TotalMilliseconds));
-
-                //var received = _socket.EndReceive(asyncResult);
+#endif
 
                 if (received == 0)
                     // the remote server shut down the socket
                     break;
-
+#if NET46
+                buffer.Add(data[0]);
+#else
                 buffer.Add(data.Array[0]);
+#endif
+
             }
             while (!(buffer.Count > 0 && (buffer[buffer.Count - 1] == LineFeed || buffer[buffer.Count - 1] == Null)));
 
