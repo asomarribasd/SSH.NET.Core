@@ -35,5 +35,6 @@
     "tags": [ ".net.core", "ssh", "ssh.net" ],
     "title": "SSH.Net.Core",
     "version": "0.9.1-rc-*",
-    "releaseNotes": ".Net 4.6 compatibility added"
+    "releaseNotes": ".Net 4.6 compatibility added",
+    "copyright": "Crypttech 2016"
 }
