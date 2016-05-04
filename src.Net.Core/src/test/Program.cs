@@ -27,12 +27,7 @@ namespace test
 
             //    Console.WriteLine(comm.Execute());
             //}
-
-
-            PasswordConnectionInfo conn = new PasswordConnectionInfo("172.17.7.191", 22, "clog", "ctech99.99clog");
-            //PasswordConnectionInfo conn = new PasswordConnectionInfo("172.17.7.88", 22, "root", "ctech99.99clog");
-            SftpClient sftpClient = new SftpClient(conn);
-            sftpClient.Connect();
+            
 
             //using (var output = File.OpenWrite(@"c:\!temp\syslog8"))
             //{
@@ -41,8 +36,7 @@ namespace test
             //    input.CopyToAsync(output).Wait();
             //}
 
-
-            sftpClient.EnsureDirectoryExist("cryptolog/workers/parser");
+            
             
             //var d = sftpClient.ListDirectory("");
             //Console.WriteLine(string.Join(", ", d.Select(s => s.Name)));
