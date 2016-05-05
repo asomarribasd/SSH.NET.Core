@@ -18,6 +18,14 @@ namespace test
             //sshClient.Connect();
 
 
+            //SshClient sshClient = new SshClient(conn);
+            //sshClient.Connect();
+
+            //var c = sshClient.RunCommand("source ~/.dnx/dnvm/dnvm.sh && dnvm uninstall dnx-coreclr-linux-x64.1.0.0-rc2-20221 -y");
+            //Console.WriteLine(c.Result + "\n\n\n" + c.Error);
+            //c = sshClient.RunCommand("source ~/.dnx/dnvm/dnvm.sh && dnvm2 upgrade -u -r coreclr2 -y");
+            //Console.WriteLine(c.Result + "\n\n\n" + c.Error);
+
             //while (true)
             //{
             //    var command = Console.ReadLine();
@@ -27,7 +35,7 @@ namespace test
 
             //    Console.WriteLine(comm.Execute());
             //}
-            
+
 
             //using (var output = File.OpenWrite(@"c:\!temp\syslog8"))
             //{
@@ -36,8 +44,8 @@ namespace test
             //    input.CopyToAsync(output).Wait();
             //}
 
-            
-            
+
+
             //var d = sftpClient.ListDirectory("");
             //Console.WriteLine(string.Join(", ", d.Select(s => s.Name)));
 
