@@ -1,40 +1,39 @@
-﻿{
+{
     "authors": [ "Khamzat Salikhov" ],
+    "packOptions": {
+        "tags": [ ".net.core", "ssh", "ssh.net" ],
+        "releaseNotes": ".Net 4.6 compatibility added",
+        "projectUrl": "https://github.com/pelhu/SSH.NET.Core"
+    },
+    "title": "SSH.Net.Core",
+    "version": "0.9.2-rc",
+    "copyright": "Crypttech 2016",
     "dependencies": {
-        "Microsoft.CSharp": "4.0.1-rc2-23910",
-        "Microsoft.NETCore.Portable.Compatibility": "1.0.1-rc2-23910",
-        "System.Diagnostics.Tracing": "4.1.0-rc2-23910",
-        "System.Runtime": "4.1.0-rc2-23910",
-        "System.Runtime.Serialization.Primitives": "4.1.1-rc2-23910",
-        "System.Threading.Tasks.Parallel": "4.0.1-rc2-23910"
+        "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
+        "NETStandard.Library": "1.6.1",
+        "System.Runtime.Serialization.Primitives": "4.3.0",
+        "System.Threading.Thread": "4.3.0",
+        "System.Threading.ThreadPool": "4.3.0",
+        "System.Xml.XmlDocument": "4.3.0",
+        "System.Xml.XPath.XmlDocument": "4.3.0",
+        "System.Net.NameResolution": "4.3.0"
     },
     "description": "Fork from sshnet/SSH.NET (https://www.nuget.org/packages/SSH.NET/2014.4.6-beta2) but for .Net Core",
     "frameworks": {
         "net46": {
-            "compilationOptions": {
+            "buildOptions": {
                 "define": [ "NET46" ]
             },
-            "frameworkAssemblies": {
-                "System.XML": "4.0.0.0"
+            "dependencies": {
+                "System.Security.Cryptography.Algorithms": "4.3.0"
             }
         },
-        "dnxcore50": {
+        "netstandard1.6": {
+            "imports": "dnxcore50",
             "dependencies": {
-                "System.Net.NameResolution": "4.0.0-rc2-23910",
-                "System.Security.Cryptography.Algorithms": "4.0.0-rc2-23907",
-                "System.Threading.Thread": "4.0.0-rc2-23910",
-                "System.Threading.ThreadPool": "4.0.10-rc2-23910",
-                "System.Xml.XmlDocument": "4.0.1-rc2-23910",
-                "NETStandard.Library": "1.0.0-rc2-23910",
-                "System.Xml.XPath.XmlDocument": "4.0.1-rc2-23910"
+                "System.Threading.Tasks.Parallel": "4.3.0",
+                "Microsoft.CSharp": "4.3.0"
             }
         }
-    },
-    "licenseUrl": "",
-    "projectUrl": "https://github.com/pelhu/SSH.NET.Core",
-    "tags": [ ".net.core", "ssh", "ssh.net" ],
-    "title": "SSH.Net.Core",
-    "version": "0.9.1-rc-*",
-    "releaseNotes": ".Net 4.6 compatibility added",
-    "copyright": "Crypttech 2016"
+    }
 }

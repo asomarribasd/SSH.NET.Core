@@ -1,31 +1,29 @@
 {
-  "version": "1.0.0-*",
-  "description": "test Console Application",
-  "authors": [ "khamzatsalikhov" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
+    "version": "1.0.0-*",
+    "description": "test Console Application",
+    "authors": [ "khamzatsalikhov" ],
 
-  "compilationOptions": {
-    "emitEntryPoint": true
-  },
+    "buildOptions": {
+        "emitEntryPoint": true
+    },
 
-  "commands": {
-    "test": "test"
-  },
+    "commands": {
+        "test": "test"
+    },
 
     "dependencies": {
-        "NETStandard.Library": "1.0.0-rc2-23910",
-        "Microsoft.NETCore.Portable.Compatibility": "1.0.1-rc2-23910",
-        "SSH.Net.Core": "0.9.1-rc",
+        "Microsoft.NETCore.App": {
+            "type": "platform",
+            "version": "1.1.0"
+        },
+        "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
+        "SSH.Net.Core": "0.9.1-rc-2",
         "Flurl": "1.1.2"
     },
 
     "frameworks": {
-        "dnxcore50": {
-            "dependencies": {
-            }
-        },
-        "net46": {}
+        "netcoreapp1.0": {
+            "imports": "dnxcore50"
+        }
     }
 }
