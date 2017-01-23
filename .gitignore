@@ -1,6 +1,8 @@
 # Visual Studio build output
 src/**/bin/**
 src/**/obj/**
+src.Net.Core/**/bin/**
+src.Net.Core/**/obj/**
 
 # MSTest test Results
 src/TestResults/
