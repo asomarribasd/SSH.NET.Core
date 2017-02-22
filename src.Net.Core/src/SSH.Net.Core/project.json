@@ -6,7 +6,7 @@
         "projectUrl": "https://github.com/pelhu/SSH.NET.Core"
     },
     "title": "SSH.Net.Core",
-    "version": "0.9.2-rc",
+    "version": "0.9.5-rc",
     "copyright": "Crypttech 2016",
     "dependencies": {
         "Microsoft.NETCore.Portable.Compatibility": "1.0.1",

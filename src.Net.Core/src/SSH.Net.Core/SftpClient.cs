@@ -124,7 +124,7 @@ namespace Renci.SshNet
                 CheckDisposed();
                 if (_sftpSession == null)
                     throw new SshConnectionException("Client not connected.");
-                return (int) _sftpSession.ProtocolVersion;
+                return (int)_sftpSession.ProtocolVersion;
             }
         }
 
@@ -292,6 +292,20 @@ namespace Renci.SshNet
 
             if (_sftpSession == null)
                 throw new SshConnectionException("Client not connected.");
+
+
+            if (path != null && path.Contains('\\'))
+            {
+                path = path.Replace('\\', '/');
+            }
+
+            if (Exists(path)) return;
+
+            var parentDir = Path.GetDirectoryName(path);
+            if (parentDir != null && parentDir.Any(c => c != '/' && c != '\\') && !Exists(parentDir))
+            {
+                CreateDirectory(parentDir);
+            }
 
             var fullPath = _sftpSession.GetCanonicalPath(path);
 
