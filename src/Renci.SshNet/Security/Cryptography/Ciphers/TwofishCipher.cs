@@ -13,7 +13,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// <param name="key">The key.</param>
         /// <param name="mode">The mode.</param>
         /// <param name="padding">The padding.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">Keysize is not valid for this algorithm.</exception>
         public TwofishCipher(byte[] key, CipherMode mode, CipherPadding padding)
             : base(key, 16, mode, padding)
@@ -26,14 +26,13 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             //  TODO:   Refactor this algorithm
 
             // calculate the MDS matrix
-            int[] m1 = new int[2];
-            int[] mX = new int[2];
-            int[] mY = new int[2];
-            int j;
+            var m1 = new int[2];
+            var mX = new int[2];
+            var mY = new int[2];
 
-            for (int i = 0; i < MAX_KEY_BITS; i++)
+            for (var i = 0; i < MAX_KEY_BITS; i++)
             {
-                j = P[0 + i] & 0xff;
+                var j = P[0 + i] & 0xff;
                 m1[0] = j;
                 mX[0] = Mx_X(j) & 0xff;
                 mY[0] = Mx_Y(j) & 0xff;
@@ -52,8 +51,8 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
                 gMDS3[i] = mX[P_30] | m1[P_30] << 8 | mY[P_30] << 16 | mX[P_30] << 24;
             }
 
-            this.k64Cnt = key.Length / 8; // pre-padded ?
-            this.SetKey(key);
+            _k64Cnt = key.Length / 8; // pre-padded ?
+            SetKey(key);
         }
 
         /// <summary>
@@ -69,17 +68,16 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// </returns>
         public override int EncryptBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
         {
-            int x0 = BytesTo32Bits(inputBuffer, inputOffset) ^ gSubKeys[INPUT_WHITEN];
-            int x1 = BytesTo32Bits(inputBuffer, inputOffset + 4) ^ gSubKeys[INPUT_WHITEN + 1];
-            int x2 = BytesTo32Bits(inputBuffer, inputOffset + 8) ^ gSubKeys[INPUT_WHITEN + 2];
-            int x3 = BytesTo32Bits(inputBuffer, inputOffset + 12) ^ gSubKeys[INPUT_WHITEN + 3];
+            var x0 = BytesTo32Bits(inputBuffer, inputOffset) ^ gSubKeys[INPUT_WHITEN];
+            var x1 = BytesTo32Bits(inputBuffer, inputOffset + 4) ^ gSubKeys[INPUT_WHITEN + 1];
+            var x2 = BytesTo32Bits(inputBuffer, inputOffset + 8) ^ gSubKeys[INPUT_WHITEN + 2];
+            var x3 = BytesTo32Bits(inputBuffer, inputOffset + 12) ^ gSubKeys[INPUT_WHITEN + 3];
 
-            int k = ROUND_SUBKEYS;
-            int t0, t1;
-            for (int r = 0; r < ROUNDS; r += 2)
+            var k = ROUND_SUBKEYS;
+            for (var r = 0; r < ROUNDS; r += 2)
             {
-                t0 = Fe32_0(gSBox, x0);
-                t1 = Fe32_3(gSBox, x1);
+                var t0 = Fe32_0(gSBox, x0);
+                var t1 = Fe32_3(gSBox, x1);
                 x2 ^= t0 + t1 + gSubKeys[k++];
                 x2 = (int)((uint)x2 >> 1) | x2 << 31;
                 x3 = (x3 << 1 | (int)((uint)x3 >> 31)) ^ (t0 + 2 * t1 + gSubKeys[k++]);
@@ -96,7 +94,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             Bits32ToBytes(x0 ^ gSubKeys[OUTPUT_WHITEN + 2], outputBuffer, outputOffset + 8);
             Bits32ToBytes(x1 ^ gSubKeys[OUTPUT_WHITEN + 3], outputBuffer, outputOffset + 12);
 
-            return this.BlockSize;
+            return BlockSize;
         }
 
         /// <summary>
@@ -112,17 +110,16 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// </returns>
         public override int DecryptBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
         {
-            int x2 = BytesTo32Bits(inputBuffer, inputOffset) ^ gSubKeys[OUTPUT_WHITEN];
-            int x3 = BytesTo32Bits(inputBuffer, inputOffset + 4) ^ gSubKeys[OUTPUT_WHITEN + 1];
-            int x0 = BytesTo32Bits(inputBuffer, inputOffset + 8) ^ gSubKeys[OUTPUT_WHITEN + 2];
-            int x1 = BytesTo32Bits(inputBuffer, inputOffset + 12) ^ gSubKeys[OUTPUT_WHITEN + 3];
+            var x2 = BytesTo32Bits(inputBuffer, inputOffset) ^ gSubKeys[OUTPUT_WHITEN];
+            var x3 = BytesTo32Bits(inputBuffer, inputOffset + 4) ^ gSubKeys[OUTPUT_WHITEN + 1];
+            var x0 = BytesTo32Bits(inputBuffer, inputOffset + 8) ^ gSubKeys[OUTPUT_WHITEN + 2];
+            var x1 = BytesTo32Bits(inputBuffer, inputOffset + 12) ^ gSubKeys[OUTPUT_WHITEN + 3];
 
-            int k = ROUND_SUBKEYS + 2 * ROUNDS - 1;
-            int t0, t1;
-            for (int r = 0; r < ROUNDS; r += 2)
+            var k = ROUND_SUBKEYS + 2 * ROUNDS - 1;
+            for (var r = 0; r < ROUNDS; r += 2)
             {
-                t0 = Fe32_0(gSBox, x2);
-                t1 = Fe32_3(gSBox, x3);
+                var t0 = Fe32_0(gSBox, x2);
+                var t1 = Fe32_3(gSBox, x3);
                 x1 ^= t0 + 2 * t1 + gSubKeys[k--];
                 x0 = (x0 << 1 | (int)((uint)x0 >> 31)) ^ (t0 + t1 + gSubKeys[k--]);
                 x1 = (int)((uint)x1 >> 1) | x1 << 31;
@@ -139,145 +136,48 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             Bits32ToBytes(x2 ^ gSubKeys[INPUT_WHITEN + 2], outputBuffer, outputOffset + 8);
             Bits32ToBytes(x3 ^ gSubKeys[INPUT_WHITEN + 3], outputBuffer, outputOffset + 12);
 
-            return this.BlockSize;
+            return BlockSize;
         }
 
         #region Static Definition Tables
 
-        private static readonly byte[] P =  {
-        //{  // p0
-			(byte) 0xA9, (byte) 0x67, (byte) 0xB3, (byte) 0xE8,
-			(byte) 0x04, (byte) 0xFD, (byte) 0xA3, (byte) 0x76,
-			(byte) 0x9A, (byte) 0x92, (byte) 0x80, (byte) 0x78,
-			(byte) 0xE4, (byte) 0xDD, (byte) 0xD1, (byte) 0x38,
-			(byte) 0x0D, (byte) 0xC6, (byte) 0x35, (byte) 0x98,
-			(byte) 0x18, (byte) 0xF7, (byte) 0xEC, (byte) 0x6C,
-			(byte) 0x43, (byte) 0x75, (byte) 0x37, (byte) 0x26,
-			(byte) 0xFA, (byte) 0x13, (byte) 0x94, (byte) 0x48,
-			(byte) 0xF2, (byte) 0xD0, (byte) 0x8B, (byte) 0x30,
-			(byte) 0x84, (byte) 0x54, (byte) 0xDF, (byte) 0x23,
-			(byte) 0x19, (byte) 0x5B, (byte) 0x3D, (byte) 0x59,
-			(byte) 0xF3, (byte) 0xAE, (byte) 0xA2, (byte) 0x82,
-			(byte) 0x63, (byte) 0x01, (byte) 0x83, (byte) 0x2E,
-			(byte) 0xD9, (byte) 0x51, (byte) 0x9B, (byte) 0x7C,
-			(byte) 0xA6, (byte) 0xEB, (byte) 0xA5, (byte) 0xBE,
-			(byte) 0x16, (byte) 0x0C, (byte) 0xE3, (byte) 0x61,
-			(byte) 0xC0, (byte) 0x8C, (byte) 0x3A, (byte) 0xF5,
-			(byte) 0x73, (byte) 0x2C, (byte) 0x25, (byte) 0x0B,
-			(byte) 0xBB, (byte) 0x4E, (byte) 0x89, (byte) 0x6B,
-			(byte) 0x53, (byte) 0x6A, (byte) 0xB4, (byte) 0xF1,
-			(byte) 0xE1, (byte) 0xE6, (byte) 0xBD, (byte) 0x45,
-			(byte) 0xE2, (byte) 0xF4, (byte) 0xB6, (byte) 0x66,
-			(byte) 0xCC, (byte) 0x95, (byte) 0x03, (byte) 0x56,
-			(byte) 0xD4, (byte) 0x1C, (byte) 0x1E, (byte) 0xD7,
-			(byte) 0xFB, (byte) 0xC3, (byte) 0x8E, (byte) 0xB5,
-			(byte) 0xE9, (byte) 0xCF, (byte) 0xBF, (byte) 0xBA,
-			(byte) 0xEA, (byte) 0x77, (byte) 0x39, (byte) 0xAF,
-			(byte) 0x33, (byte) 0xC9, (byte) 0x62, (byte) 0x71,
-			(byte) 0x81, (byte) 0x79, (byte) 0x09, (byte) 0xAD,
-			(byte) 0x24, (byte) 0xCD, (byte) 0xF9, (byte) 0xD8,
-			(byte) 0xE5, (byte) 0xC5, (byte) 0xB9, (byte) 0x4D,
-			(byte) 0x44, (byte) 0x08, (byte) 0x86, (byte) 0xE7,
-			(byte) 0xA1, (byte) 0x1D, (byte) 0xAA, (byte) 0xED,
-			(byte) 0x06, (byte) 0x70, (byte) 0xB2, (byte) 0xD2,
-			(byte) 0x41, (byte) 0x7B, (byte) 0xA0, (byte) 0x11,
-			(byte) 0x31, (byte) 0xC2, (byte) 0x27, (byte) 0x90,
-			(byte) 0x20, (byte) 0xF6, (byte) 0x60, (byte) 0xFF,
-			(byte) 0x96, (byte) 0x5C, (byte) 0xB1, (byte) 0xAB,
-			(byte) 0x9E, (byte) 0x9C, (byte) 0x52, (byte) 0x1B,
-			(byte) 0x5F, (byte) 0x93, (byte) 0x0A, (byte) 0xEF,
-			(byte) 0x91, (byte) 0x85, (byte) 0x49, (byte) 0xEE,
-			(byte) 0x2D, (byte) 0x4F, (byte) 0x8F, (byte) 0x3B,
-			(byte) 0x47, (byte) 0x87, (byte) 0x6D, (byte) 0x46,
-			(byte) 0xD6, (byte) 0x3E, (byte) 0x69, (byte) 0x64,
-			(byte) 0x2A, (byte) 0xCE, (byte) 0xCB, (byte) 0x2F,
-			(byte) 0xFC, (byte) 0x97, (byte) 0x05, (byte) 0x7A,
-			(byte) 0xAC, (byte) 0x7F, (byte) 0xD5, (byte) 0x1A,
-			(byte) 0x4B, (byte) 0x0E, (byte) 0xA7, (byte) 0x5A,
-			(byte) 0x28, (byte) 0x14, (byte) 0x3F, (byte) 0x29,
-			(byte) 0x88, (byte) 0x3C, (byte) 0x4C, (byte) 0x02,
-			(byte) 0xB8, (byte) 0xDA, (byte) 0xB0, (byte) 0x17,
-			(byte) 0x55, (byte) 0x1F, (byte) 0x8A, (byte) 0x7D,
-			(byte) 0x57, (byte) 0xC7, (byte) 0x8D, (byte) 0x74,
-			(byte) 0xB7, (byte) 0xC4, (byte) 0x9F, (byte) 0x72,
-			(byte) 0x7E, (byte) 0x15, (byte) 0x22, (byte) 0x12,
-			(byte) 0x58, (byte) 0x07, (byte) 0x99, (byte) 0x34,
-			(byte) 0x6E, (byte) 0x50, (byte) 0xDE, (byte) 0x68,
-			(byte) 0x65, (byte) 0xBC, (byte) 0xDB, (byte) 0xF8,
-			(byte) 0xC8, (byte) 0xA8, (byte) 0x2B, (byte) 0x40,
-			(byte) 0xDC, (byte) 0xFE, (byte) 0x32, (byte) 0xA4,
-			(byte) 0xCA, (byte) 0x10, (byte) 0x21, (byte) 0xF0,
-			(byte) 0xD3, (byte) 0x5D, (byte) 0x0F, (byte) 0x00,
-			(byte) 0x6F, (byte) 0x9D, (byte) 0x36, (byte) 0x42,
-			(byte) 0x4A, (byte) 0x5E, (byte) 0xC1, (byte) 0xE0,
-        //                                    },
-        //{  // p1
-			(byte) 0x75, (byte) 0xF3, (byte) 0xC6, (byte) 0xF4,
-			(byte) 0xDB, (byte) 0x7B, (byte) 0xFB, (byte) 0xC8,
-			(byte) 0x4A, (byte) 0xD3, (byte) 0xE6, (byte) 0x6B,
-			(byte) 0x45, (byte) 0x7D, (byte) 0xE8, (byte) 0x4B,
-			(byte) 0xD6, (byte) 0x32, (byte) 0xD8, (byte) 0xFD,
-			(byte) 0x37, (byte) 0x71, (byte) 0xF1, (byte) 0xE1,
-			(byte) 0x30, (byte) 0x0F, (byte) 0xF8, (byte) 0x1B,
-			(byte) 0x87, (byte) 0xFA, (byte) 0x06, (byte) 0x3F,
-			(byte) 0x5E, (byte) 0xBA, (byte) 0xAE, (byte) 0x5B,
-			(byte) 0x8A, (byte) 0x00, (byte) 0xBC, (byte) 0x9D,
-			(byte) 0x6D, (byte) 0xC1, (byte) 0xB1, (byte) 0x0E,
-			(byte) 0x80, (byte) 0x5D, (byte) 0xD2, (byte) 0xD5,
-			(byte) 0xA0, (byte) 0x84, (byte) 0x07, (byte) 0x14,
-			(byte) 0xB5, (byte) 0x90, (byte) 0x2C, (byte) 0xA3,
-			(byte) 0xB2, (byte) 0x73, (byte) 0x4C, (byte) 0x54,
-			(byte) 0x92, (byte) 0x74, (byte) 0x36, (byte) 0x51,
-			(byte) 0x38, (byte) 0xB0, (byte) 0xBD, (byte) 0x5A,
-			(byte) 0xFC, (byte) 0x60, (byte) 0x62, (byte) 0x96,
-			(byte) 0x6C, (byte) 0x42, (byte) 0xF7, (byte) 0x10,
-			(byte) 0x7C, (byte) 0x28, (byte) 0x27, (byte) 0x8C,
-			(byte) 0x13, (byte) 0x95, (byte) 0x9C, (byte) 0xC7,
-			(byte) 0x24, (byte) 0x46, (byte) 0x3B, (byte) 0x70,
-			(byte) 0xCA, (byte) 0xE3, (byte) 0x85, (byte) 0xCB,
-			(byte) 0x11, (byte) 0xD0, (byte) 0x93, (byte) 0xB8,
-			(byte) 0xA6, (byte) 0x83, (byte) 0x20, (byte) 0xFF,
-			(byte) 0x9F, (byte) 0x77, (byte) 0xC3, (byte) 0xCC,
-			(byte) 0x03, (byte) 0x6F, (byte) 0x08, (byte) 0xBF,
-			(byte) 0x40, (byte) 0xE7, (byte) 0x2B, (byte) 0xE2,
-			(byte) 0x79, (byte) 0x0C, (byte) 0xAA, (byte) 0x82,
-			(byte) 0x41, (byte) 0x3A, (byte) 0xEA, (byte) 0xB9,
-			(byte) 0xE4, (byte) 0x9A, (byte) 0xA4, (byte) 0x97,
-			(byte) 0x7E, (byte) 0xDA, (byte) 0x7A, (byte) 0x17,
-			(byte) 0x66, (byte) 0x94, (byte) 0xA1, (byte) 0x1D,
-			(byte) 0x3D, (byte) 0xF0, (byte) 0xDE, (byte) 0xB3,
-			(byte) 0x0B, (byte) 0x72, (byte) 0xA7, (byte) 0x1C,
-			(byte) 0xEF, (byte) 0xD1, (byte) 0x53, (byte) 0x3E,
-			(byte) 0x8F, (byte) 0x33, (byte) 0x26, (byte) 0x5F,
-			(byte) 0xEC, (byte) 0x76, (byte) 0x2A, (byte) 0x49,
-			(byte) 0x81, (byte) 0x88, (byte) 0xEE, (byte) 0x21,
-			(byte) 0xC4, (byte) 0x1A, (byte) 0xEB, (byte) 0xD9,
-			(byte) 0xC5, (byte) 0x39, (byte) 0x99, (byte) 0xCD,
-			(byte) 0xAD, (byte) 0x31, (byte) 0x8B, (byte) 0x01,
-			(byte) 0x18, (byte) 0x23, (byte) 0xDD, (byte) 0x1F,
-			(byte) 0x4E, (byte) 0x2D, (byte) 0xF9, (byte) 0x48,
-			(byte) 0x4F, (byte) 0xF2, (byte) 0x65, (byte) 0x8E,
-			(byte) 0x78, (byte) 0x5C, (byte) 0x58, (byte) 0x19,
-			(byte) 0x8D, (byte) 0xE5, (byte) 0x98, (byte) 0x57,
-			(byte) 0x67, (byte) 0x7F, (byte) 0x05, (byte) 0x64,
-			(byte) 0xAF, (byte) 0x63, (byte) 0xB6, (byte) 0xFE,
-			(byte) 0xF5, (byte) 0xB7, (byte) 0x3C, (byte) 0xA5,
-			(byte) 0xCE, (byte) 0xE9, (byte) 0x68, (byte) 0x44,
-			(byte) 0xE0, (byte) 0x4D, (byte) 0x43, (byte) 0x69,
-			(byte) 0x29, (byte) 0x2E, (byte) 0xAC, (byte) 0x15,
-			(byte) 0x59, (byte) 0xA8, (byte) 0x0A, (byte) 0x9E,
-			(byte) 0x6E, (byte) 0x47, (byte) 0xDF, (byte) 0x34,
-			(byte) 0x35, (byte) 0x6A, (byte) 0xCF, (byte) 0xDC,
-			(byte) 0x22, (byte) 0xC9, (byte) 0xC0, (byte) 0x9B,
-			(byte) 0x89, (byte) 0xD4, (byte) 0xED, (byte) 0xAB,
-			(byte) 0x12, (byte) 0xA2, (byte) 0x0D, (byte) 0x52,
-			(byte) 0xBB, (byte) 0x02, (byte) 0x2F, (byte) 0xA9,
-			(byte) 0xD7, (byte) 0x61, (byte) 0x1E, (byte) 0xB4,
-			(byte) 0x50, (byte) 0x04, (byte) 0xF6, (byte) 0xC2,
-			(byte) 0x16, (byte) 0x25, (byte) 0x86, (byte) 0x56,
-			(byte) 0x55, (byte) 0x09, (byte) 0xBE, (byte) 0x91
-                                            //}
-		};
+        private static readonly byte[] P =
+            {
+                // p0
+                0xA9, 0x67, 0xB3, 0xE8, 0x04, 0xFD, 0xA3, 0x76, 0x9A, 0x92, 0x80, 0x78, 0xE4, 0xDD, 0xD1, 0x38,
+                0x0D, 0xC6, 0x35, 0x98, 0x18, 0xF7, 0xEC, 0x6C, 0x43, 0x75, 0x37, 0x26, 0xFA, 0x13, 0x94, 0x48,
+                0xF2, 0xD0, 0x8B, 0x30, 0x84, 0x54, 0xDF, 0x23, 0x19, 0x5B, 0x3D, 0x59, 0xF3, 0xAE, 0xA2, 0x82,
+                0x63, 0x01, 0x83, 0x2E, 0xD9, 0x51, 0x9B, 0x7C, 0xA6, 0xEB, 0xA5, 0xBE, 0x16, 0x0C, 0xE3, 0x61,
+                0xC0, 0x8C, 0x3A, 0xF5, 0x73, 0x2C, 0x25, 0x0B, 0xBB, 0x4E, 0x89, 0x6B, 0x53, 0x6A, 0xB4, 0xF1,
+                0xE1, 0xE6, 0xBD, 0x45, 0xE2, 0xF4, 0xB6, 0x66, 0xCC, 0x95, 0x03, 0x56, 0xD4, 0x1C, 0x1E, 0xD7,
+                0xFB, 0xC3, 0x8E, 0xB5, 0xE9, 0xCF, 0xBF, 0xBA, 0xEA, 0x77, 0x39, 0xAF, 0x33, 0xC9, 0x62, 0x71,
+                0x81, 0x79, 0x09, 0xAD, 0x24, 0xCD, 0xF9, 0xD8, 0xE5, 0xC5, 0xB9, 0x4D, 0x44, 0x08, 0x86, 0xE7,
+                0xA1, 0x1D, 0xAA, 0xED, 0x06, 0x70, 0xB2, 0xD2, 0x41, 0x7B, 0xA0, 0x11, 0x31, 0xC2, 0x27, 0x90,
+                0x20, 0xF6, 0x60, 0xFF, 0x96, 0x5C, 0xB1, 0xAB, 0x9E, 0x9C, 0x52, 0x1B, 0x5F, 0x93, 0x0A, 0xEF,
+                0x91, 0x85, 0x49, 0xEE, 0x2D, 0x4F, 0x8F, 0x3B, 0x47, 0x87, 0x6D, 0x46, 0xD6, 0x3E, 0x69, 0x64,
+                0x2A, 0xCE, 0xCB, 0x2F, 0xFC, 0x97, 0x05, 0x7A, 0xAC, 0x7F, 0xD5, 0x1A, 0x4B, 0x0E, 0xA7, 0x5A,
+                0x28, 0x14, 0x3F, 0x29, 0x88, 0x3C, 0x4C, 0x02, 0xB8, 0xDA, 0xB0, 0x17, 0x55, 0x1F, 0x8A, 0x7D,
+                0x57, 0xC7, 0x8D, 0x74, 0xB7, 0xC4, 0x9F, 0x72, 0x7E, 0x15, 0x22, 0x12, 0x58, 0x07, 0x99, 0x34,
+                0x6E, 0x50, 0xDE, 0x68, 0x65, 0xBC, 0xDB, 0xF8, 0xC8, 0xA8, 0x2B, 0x40, 0xDC, 0xFE, 0x32, 0xA4,
+                0xCA, 0x10, 0x21, 0xF0, 0xD3, 0x5D, 0x0F, 0x00, 0x6F, 0x9D, 0x36, 0x42, 0x4A, 0x5E, 0xC1, 0xE0,
+                // p1
+                0x75, 0xF3, 0xC6, 0xF4, 0xDB, 0x7B, 0xFB, 0xC8, 0x4A, 0xD3, 0xE6, 0x6B, 0x45, 0x7D, 0xE8, 0x4B,
+                0xD6, 0x32, 0xD8, 0xFD, 0x37, 0x71, 0xF1, 0xE1, 0x30, 0x0F, 0xF8, 0x1B, 0x87, 0xFA, 0x06, 0x3F,
+                0x5E, 0xBA, 0xAE, 0x5B, 0x8A, 0x00, 0xBC, 0x9D, 0x6D, 0xC1, 0xB1, 0x0E, 0x80, 0x5D, 0xD2, 0xD5,
+                0xA0, 0x84, 0x07, 0x14, 0xB5, 0x90, 0x2C, 0xA3, 0xB2, 0x73, 0x4C, 0x54, 0x92, 0x74, 0x36, 0x51,
+                0x38, 0xB0, 0xBD, 0x5A, 0xFC, 0x60, 0x62, 0x96, 0x6C, 0x42, 0xF7, 0x10, 0x7C, 0x28, 0x27, 0x8C,
+                0x13, 0x95, 0x9C, 0xC7, 0x24, 0x46, 0x3B, 0x70, 0xCA, 0xE3, 0x85, 0xCB, 0x11, 0xD0, 0x93, 0xB8,
+                0xA6, 0x83, 0x20, 0xFF, 0x9F, 0x77, 0xC3, 0xCC, 0x03, 0x6F, 0x08, 0xBF, 0x40, 0xE7, 0x2B, 0xE2,
+                0x79, 0x0C, 0xAA, 0x82, 0x41, 0x3A, 0xEA, 0xB9, 0xE4, 0x9A, 0xA4, 0x97, 0x7E, 0xDA, 0x7A, 0x17,
+                0x66, 0x94, 0xA1, 0x1D, 0x3D, 0xF0, 0xDE, 0xB3, 0x0B, 0x72, 0xA7, 0x1C, 0xEF, 0xD1, 0x53, 0x3E,
+                0x8F, 0x33, 0x26, 0x5F, 0xEC, 0x76, 0x2A, 0x49, 0x81, 0x88, 0xEE, 0x21, 0xC4, 0x1A, 0xEB, 0xD9,
+                0xC5, 0x39, 0x99, 0xCD, 0xAD, 0x31, 0x8B, 0x01, 0x18, 0x23, 0xDD, 0x1F, 0x4E, 0x2D, 0xF9, 0x48,
+                0x4F, 0xF2, 0x65, 0x8E, 0x78, 0x5C, 0x58, 0x19, 0x8D, 0xE5, 0x98, 0x57, 0x67, 0x7F, 0x05, 0x64,
+                0xAF, 0x63, 0xB6, 0xFE, 0xF5, 0xB7, 0x3C, 0xA5, 0xCE, 0xE9, 0x68, 0x44, 0xE0, 0x4D, 0x43, 0x69,
+                0x29, 0x2E, 0xAC, 0x15, 0x59, 0xA8, 0x0A, 0x9E, 0x6E, 0x47, 0xDF, 0x34, 0x35, 0x6A, 0xCF, 0xDC,
+                0x22, 0xC9, 0xC0, 0x9B, 0x89, 0xD4, 0xED, 0xAB, 0x12, 0xA2, 0x0D, 0x52, 0xBB, 0x02, 0x2F, 0xA9,
+                0xD7, 0x61, 0x1E, 0xB4, 0x50, 0x04, 0xF6, 0xC2, 0x16, 0x25, 0x86, 0x56, 0x55, 0x09, 0xBE, 0x91
+            };
 
         #endregion
 
@@ -347,22 +247,22 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         private int[] gSubKeys;
         private int[] gSBox;
 
-        private int k64Cnt;
+        private readonly int _k64Cnt;
 
         private void SetKey(byte[] key)
         {
-            int[] k32e = new int[MAX_KEY_BITS / 64]; // 4
-            int[] k32o = new int[MAX_KEY_BITS / 64]; // 4
+            var k32e = new int[MAX_KEY_BITS / 64]; // 4
+            var k32o = new int[MAX_KEY_BITS / 64]; // 4
 
-            int[] sBoxKeys = new int[MAX_KEY_BITS / 64]; // 4
+            var sBoxKeys = new int[MAX_KEY_BITS / 64]; // 4
             gSubKeys = new int[TOTAL_SUBKEYS];
 
-            if (k64Cnt < 1)
+            if (_k64Cnt < 1)
             {
                 throw new ArgumentException("Key size less than 64 bits");
             }
 
-            if (k64Cnt > 4)
+            if (_k64Cnt > 4)
             {
                 throw new ArgumentException("Key size larger than 256 bits");
             }
@@ -373,42 +273,41 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             * maximum of 32 bytes ( 256 bits ), so the range
             * for k64Cnt is 1..4
             */
-            for (int i = 0; i < k64Cnt; i++)
+            for (var i = 0; i < _k64Cnt; i++)
             {
                 var p = i * 8;
 
                 k32e[i] = BytesTo32Bits(key, p);
                 k32o[i] = BytesTo32Bits(key, p + 4);
 
-                sBoxKeys[k64Cnt - 1 - i] = RS_MDS_Encode(k32e[i], k32o[i]);
+                sBoxKeys[_k64Cnt - 1 - i] = RS_MDS_Encode(k32e[i], k32o[i]);
             }
 
-            int q, A, B;
-            for (int i = 0; i < TOTAL_SUBKEYS / 2; i++)
+            for (var i = 0; i < TOTAL_SUBKEYS / 2; i++)
             {
-                q = i * SK_STEP;
-                A = F32(q, k32e);
-                B = F32(q + SK_BUMP, k32o);
-                B = B << 8 | (int)((uint)B >> 24);
-                A += B;
-                gSubKeys[i * 2] = A;
-                A += B;
-                gSubKeys[i * 2 + 1] = A << SK_ROTL | (int)((uint)A >> (32 - SK_ROTL));
+                var q = i * SK_STEP;
+                var a = F32(q, k32e);
+                var b = F32(q + SK_BUMP, k32o);
+                b = b << 8 | (int)((uint)b >> 24);
+                a += b;
+                gSubKeys[i * 2] = a;
+                a += b;
+                gSubKeys[i * 2 + 1] = a << SK_ROTL | (int)((uint)a >> (32 - SK_ROTL));
             }
 
             /*
             * fully expand the table for speed
             */
-            int k0 = sBoxKeys[0];
-            int k1 = sBoxKeys[1];
-            int k2 = sBoxKeys[2];
-            int k3 = sBoxKeys[3];
-            int b0, b1, b2, b3;
+            var k0 = sBoxKeys[0];
+            var k1 = sBoxKeys[1];
+            var k2 = sBoxKeys[2];
+            var k3 = sBoxKeys[3];
             gSBox = new int[4 * MAX_KEY_BITS];
-            for (int i = 0; i < MAX_KEY_BITS; i++)
+            for (var i = 0; i < MAX_KEY_BITS; i++)
             {
-                b0 = b1 = b2 = b3 = i;
-                switch (k64Cnt & 3)
+                int b1, b2, b3;
+                var b0 = b1 = b2 = b3 = i;
+                switch (_k64Cnt & 3)
                 {
                     case 1:
                         gSBox[i * 2] = gMDS0[(P[P_01 * 256 + b0] & 0xff) ^ M_b0(k0)];
@@ -450,17 +349,17 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         */
         private int F32(int x, int[] k32)
         {
-            int b0 = M_b0(x);
-            int b1 = M_b1(x);
-            int b2 = M_b2(x);
-            int b3 = M_b3(x);
-            int k0 = k32[0];
-            int k1 = k32[1];
-            int k2 = k32[2];
-            int k3 = k32[3];
+            var b0 = M_b0(x);
+            var b1 = M_b1(x);
+            var b2 = M_b2(x);
+            var b3 = M_b3(x);
+            var k0 = k32[0];
+            var k1 = k32[1];
+            var k2 = k32[2];
+            var k3 = k32[3];
 
-            int result = 0;
-            switch (k64Cnt & 3)
+            var result = 0;
+            switch (_k64Cnt & 3)
             {
                 case 1:
                     result = gMDS0[(P[P_01 * 256 + b0] & 0xff) ^ M_b0(k0)] ^
@@ -502,7 +401,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         */
         private static int RS_MDS_Encode(int k0, int k1)
         {
-            int r = k1;
+            var r = k1;
             // shift 1 byte at a time
             r = RS_rem(r);
             r = RS_rem(r);
@@ -528,10 +427,10 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         */
         private static int RS_rem(int x)
         {
-            int b = (int)(((uint)x >> 24) & 0xff);
-            int g2 = ((b << 1) ^
+            var b = (int)(((uint)x >> 24) & 0xff);
+            var g2 = ((b << 1) ^
                     ((b & 0x80) != 0 ? RS_GF_FDBK : 0)) & 0xff;
-            int g3 = ((int)((uint)b >> 1) ^
+            var g3 = ((int)((uint)b >> 1) ^
                     ((b & 0x01) != 0 ? (int)((uint)RS_GF_FDBK >> 1) : 0)) ^ g2;
             return ((x << 8) ^ (g3 << 24) ^ (g2 << 16) ^ (g3 << 8) ^ b);
         }

@@ -31,7 +31,7 @@ namespace Renci.SshNet
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether port forwarding is started.
+        /// Gets a value indicating whether port forwarding is started.
         /// </summary>
         /// <value>
         /// <c>true</c> if port forwarding is started; otherwise, <c>false</c>.
@@ -73,10 +73,10 @@ namespace Renci.SshNet
         {
             CheckDisposed();
 
-            if (!IsStarted)
-                return;
-
-            StopPort(Session.ConnectionInfo.Timeout);
+            if (IsStarted)
+            {
+                StopPort(Session.ConnectionInfo.Timeout);
+            }
         }
 
         /// <summary>
@@ -93,24 +93,25 @@ namespace Renci.SshNet
         {
             RaiseClosing();
 
-            if (Session != null)
+            var session = Session;
+            if (session != null)
             {
-                Session.ErrorOccured -= Session_ErrorOccured;
+                session.ErrorOccured -= Session_ErrorOccured;
             }
         }
 
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged ResourceMessages.</param>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                if (Session != null)
+                var session = Session;
+                if (session != null)
                 {
-                    Session.ErrorOccured -= Session_ErrorOccured;
-                    StopPort(Session.ConnectionInfo.Timeout);
+                    StopPort(session.ConnectionInfo.Timeout);
                     Session = null;
                 }
             }
@@ -145,7 +146,7 @@ namespace Renci.SshNet
             var handlers = RequestReceived;
             if (handlers != null)
             {
-                RequestReceived(this, new PortForwardEventArgs(host, port));
+                handlers(this, new PortForwardEventArgs(host, port));
             }
         }
 

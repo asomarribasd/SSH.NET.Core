@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Renci.SshNet.Abstractions;
 using Renci.SshNet.Security;
 using Renci.SshNet.Messages.Connection;
 using Renci.SshNet.Common;
 using Renci.SshNet.Messages.Authentication;
-using Renci.SshNet.Security.Cryptography;
 using Renci.SshNet.Security.Cryptography.Ciphers.Modes;
 using Renci.SshNet.Security.Cryptography.Ciphers;
 
@@ -46,7 +46,7 @@ namespace Renci.SshNet
         /// <summary>
         /// Gets supported authentication methods for this connection.
         /// </summary>
-        public IEnumerable<AuthenticationMethod> AuthenticationMethods { get; private set; }
+        public IList<AuthenticationMethod> AuthenticationMethods { get; private set; }
 
         /// <summary>
         /// Gets supported compression algorithms for this connection.
@@ -122,7 +122,7 @@ namespace Renci.SshNet
         /// The connection timeout. The default value is 30 seconds.
         /// </value>
         /// <example>
-        ///   <code source="..\..\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect Timeout" language="C#" title="Specify connection timeout" />
+        ///   <code source="..\..\src\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect Timeout" language="C#" title="Specify connection timeout" />
         /// </example>
         public TimeSpan Timeout { get; set; }
 
@@ -156,7 +156,7 @@ namespace Renci.SshNet
         /// Occurs when authentication banner is sent by the server.
         /// </summary>
         /// <example>
-        ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo AuthenticationBanner" language="C#" title="Display authentication banner" />
+        ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo AuthenticationBanner" language="C#" title="Display authentication banner" />
         /// </example>
         public event EventHandler<AuthenticationBannerEventArgs> AuthenticationBanner;
 
@@ -218,7 +218,7 @@ namespace Renci.SshNet
         /// <param name="authenticationMethods">The authentication methods.</param>
         /// <exception cref="ArgumentNullException"><paramref name="host"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException"><paramref name="host"/> is a zero-length string.</exception>
-        /// <exception cref="ArgumentException"><paramref name="username" /> is null, a zero-length string or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentException"><paramref name="username" /> is <c>null</c>, a zero-length string or contains only whitespace characters.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="authenticationMethods"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">No <paramref name="authenticationMethods"/> specified.</exception>
         public ConnectionInfo(string host, string username, params AuthenticationMethod[] authenticationMethods)
@@ -234,7 +234,7 @@ namespace Renci.SshNet
         /// <param name="username">The username.</param>
         /// <param name="authenticationMethods">The authentication methods.</param>
         /// <exception cref="ArgumentNullException"><paramref name="host"/> is <c>null</c>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="username" /> is null, a zero-length string or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentException"><paramref name="username" /> is <c>null</c>, a zero-length string or contains only whitespace characters.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="authenticationMethods"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">No <paramref name="authenticationMethods"/> specified.</exception>
@@ -242,8 +242,6 @@ namespace Renci.SshNet
             : this(host, port, username, ProxyTypes.None, null, 0, null, null, authenticationMethods)
         {
         }
-
-        //  TODO: DOCS Add exception documentation for this class.
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConnectionInfo" /> class.
@@ -258,7 +256,7 @@ namespace Renci.SshNet
         /// <param name="proxyPassword">The proxy password.</param>
         /// <param name="authenticationMethods">The authentication methods.</param>
         /// <exception cref="ArgumentNullException"><paramref name="host"/> is <c>null</c>.</exception>
-        /// <exception cref="ArgumentException"><paramref name="username" /> is null, a zero-length string or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentException"><paramref name="username" /> is <c>null</c>, a zero-length string or contains only whitespace characters.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="proxyType"/> is not <see cref="ProxyTypes.None"/> and <paramref name="proxyHost" /> is <c>null</c>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="proxyType"/> is not <see cref="ProxyTypes.None"/> and <paramref name="proxyPort" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
@@ -284,7 +282,7 @@ namespace Renci.SshNet
 
             if (authenticationMethods == null)
                 throw new ArgumentNullException("authenticationMethods");
-            if (!authenticationMethods.Any())
+            if (authenticationMethods.Length == 0)
                 throw new ArgumentException("At least one authentication method should be specified.", "authenticationMethods");
 
             //  Set default connection values
@@ -334,17 +332,17 @@ namespace Renci.SshNet
 
             HmacAlgorithms = new Dictionary<string, HashInfo>
                 {
-                    {"hmac-md5", new HashInfo(16*8, HashAlgorithmFactory.CreateHMACMD5)},
-                    {"hmac-md5-96", new HashInfo(16*8, key => HashAlgorithmFactory.CreateHMACMD5(key, 96))},
-                    {"hmac-sha1", new HashInfo(20*8, HashAlgorithmFactory.CreateHMACSHA1)},
-                    {"hmac-sha1-96", new HashInfo(20*8, key => HashAlgorithmFactory.CreateHMACSHA1(key, 96))},
-                    {"hmac-sha2-256", new HashInfo(32*8, HashAlgorithmFactory.CreateHMACSHA256)},
-                    {"hmac-sha2-256-96", new HashInfo(32*8, key => HashAlgorithmFactory.CreateHMACSHA256(key, 96))},
-                    {"hmac-sha2-512", new HashInfo(64 * 8, HashAlgorithmFactory.CreateHMACSHA512)},
-                    {"hmac-sha2-512-96", new HashInfo(64 * 8,  key => HashAlgorithmFactory.CreateHMACSHA512(key, 96))},
+                    {"hmac-md5", new HashInfo(16*8, CryptoAbstraction.CreateHMACMD5)},
+                    {"hmac-md5-96", new HashInfo(16*8, key => CryptoAbstraction.CreateHMACMD5(key, 96))},
+                    {"hmac-sha1", new HashInfo(20*8, CryptoAbstraction.CreateHMACSHA1)},
+                    {"hmac-sha1-96", new HashInfo(20*8, key => CryptoAbstraction.CreateHMACSHA1(key, 96))},
+                    {"hmac-sha2-256", new HashInfo(32*8, CryptoAbstraction.CreateHMACSHA256)},
+                    {"hmac-sha2-256-96", new HashInfo(32*8, key => CryptoAbstraction.CreateHMACSHA256(key, 96))},
+                    {"hmac-sha2-512", new HashInfo(64 * 8, CryptoAbstraction.CreateHMACSHA512)},
+                    {"hmac-sha2-512-96", new HashInfo(64 * 8,  key => CryptoAbstraction.CreateHMACSHA512(key, 96))},
                     //{"umac-64@openssh.com", typeof(HMacSha1)},
-                    {"hmac-ripemd160", new HashInfo(160, HashAlgorithmFactory.CreateHMACRIPEMD160)},
-                    {"hmac-ripemd160@openssh.com", new HashInfo(160, HashAlgorithmFactory.CreateHMACRIPEMD160)},
+                    {"hmac-ripemd160", new HashInfo(160, CryptoAbstraction.CreateHMACRIPEMD160)},
+                    {"hmac-ripemd160@openssh.com", new HashInfo(160, CryptoAbstraction.CreateHMACRIPEMD160)},
                     //{"none", typeof(...)},
                 };
 
@@ -370,19 +368,19 @@ namespace Renci.SshNet
 
             ChannelRequests = new Dictionary<string, RequestInfo>
                 {
-                    {EnvironmentVariableRequestInfo.NAME, new EnvironmentVariableRequestInfo()},
-                    {ExecRequestInfo.NAME, new ExecRequestInfo()},
-                    {ExitSignalRequestInfo.NAME, new ExitSignalRequestInfo()},
-                    {ExitStatusRequestInfo.NAME, new ExitStatusRequestInfo()},
-                    {PseudoTerminalRequestInfo.NAME, new PseudoTerminalRequestInfo()},
-                    {ShellRequestInfo.NAME, new ShellRequestInfo()},
-                    {SignalRequestInfo.NAME, new SignalRequestInfo()},
-                    {SubsystemRequestInfo.NAME, new SubsystemRequestInfo()},
-                    {WindowChangeRequestInfo.NAME, new WindowChangeRequestInfo()},
-                    {X11ForwardingRequestInfo.NAME, new X11ForwardingRequestInfo()},
-                    {XonXoffRequestInfo.NAME, new XonXoffRequestInfo()},
-                    {EndOfWriteRequestInfo.NAME, new EndOfWriteRequestInfo()},
-                    {KeepAliveRequestInfo.NAME, new KeepAliveRequestInfo()},
+                    {EnvironmentVariableRequestInfo.Name, new EnvironmentVariableRequestInfo()},
+                    {ExecRequestInfo.Name, new ExecRequestInfo()},
+                    {ExitSignalRequestInfo.Name, new ExitSignalRequestInfo()},
+                    {ExitStatusRequestInfo.Name, new ExitStatusRequestInfo()},
+                    {PseudoTerminalRequestInfo.Name, new PseudoTerminalRequestInfo()},
+                    {ShellRequestInfo.Name, new ShellRequestInfo()},
+                    {SignalRequestInfo.Name, new SignalRequestInfo()},
+                    {SubsystemRequestInfo.Name, new SubsystemRequestInfo()},
+                    {WindowChangeRequestInfo.Name, new WindowChangeRequestInfo()},
+                    {X11ForwardingRequestInfo.Name, new X11ForwardingRequestInfo()},
+                    {XonXoffRequestInfo.Name, new XonXoffRequestInfo()},
+                    {EndOfWriteRequestInfo.Name, new EndOfWriteRequestInfo()},
+                    {KeepAliveRequestInfo.Name, new KeepAliveRequestInfo()},
                 };
 
             Host = host;
@@ -403,7 +401,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="session">The session to be authenticated.</param>
         /// <param name="serviceFactory">The factory to use for creating new services.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="session"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="session"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="serviceFactory"/> is <c>null</c>.</exception>
         /// <exception cref="SshAuthenticationException">No suitable authentication method found to complete authentication, or permission denied.</exception>
         internal void Authenticate(ISession session, IServiceFactory serviceFactory)
@@ -437,9 +435,9 @@ namespace Renci.SshNet
             return new NoneAuthenticationMethod(Username);
         }
 
-        IEnumerable<IAuthenticationMethod> IConnectionInfoInternal.AuthenticationMethods
+        IList<IAuthenticationMethod> IConnectionInfoInternal.AuthenticationMethods
         {
-            get { return AuthenticationMethods.Cast<IAuthenticationMethod>(); }
+            get { return AuthenticationMethods.Cast<IAuthenticationMethod>().ToList(); }
         }
     }
 }

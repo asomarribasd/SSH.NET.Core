@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
+using Renci.SshNet.Abstractions;
 using Renci.SshNet.Common;
 using Renci.SshNet.Messages.Connection;
 
@@ -11,7 +10,7 @@ namespace Renci.SshNet.Channels
     /// <summary>
     /// Implements "forwarded-tcpip" SSH channel.
     /// </summary>
-    internal partial class ChannelForwardedTcpip : ServerChannel, IChannelForwardedTcpip
+    internal class ChannelForwardedTcpip : ServerChannel, IChannelForwardedTcpip
     {
         private readonly object _socketShutdownAndCloseLock = new object();
         private Socket _socket;
@@ -50,8 +49,6 @@ namespace Renci.SshNet.Channels
         /// <param name="forwardedPort">The forwarded port for which the channel is opened.</param>
         public void Bind(IPEndPoint remoteEndpoint, IForwardedPort forwardedPort)
         {
-            byte[] buffer;
-
             if (!IsConnected)
             {
                 throw new SshException("Session is not connected.");
@@ -63,10 +60,7 @@ namespace Renci.SshNet.Channels
             //  Try to connect to the socket 
             try
             {
-                //  Get buffer in memory for data exchange
-                buffer = new byte[RemotePacketSize];
-
-                OpenSocket(remoteEndpoint);
+                _socket = SocketAbstraction.Connect(remoteEndpoint, ConnectionInfo.Timeout);
 
                 // send channel open confirmation message
                 SendMessage(new ChannelOpenConfirmationMessage(RemoteChannelNumber, LocalWindowSize, LocalPacketSize, LocalChannelNumber));
@@ -79,45 +73,9 @@ namespace Renci.SshNet.Channels
                 throw;
             }
 
-            //  Start reading data from the port and send to channel
-            while (_socket != null && _socket.Connected)
-                {
-                try
-                {
-                    var read = 0;
-                    InternalSocketReceive(buffer, ref read);
+            var buffer = new byte[RemotePacketSize];
 
-                    if (read > 0)
-                    {
-#if TUNING
-                        SendData(buffer, 0, read);
-#else
-                        SendMessage(new ChannelDataMessage(RemoteChannelNumber, buffer.Take(read).ToArray()));
-#endif
-                    }
-                    else
-                    {
-                        // server quit sending
-                        break;
-                    }
-                }
-                catch (SocketException exp)
-                {
-                    if (exp.SocketErrorCode == SocketError.WouldBlock ||
-                        exp.SocketErrorCode == SocketError.IOPending ||
-                        exp.SocketErrorCode == SocketError.NoBufferSpaceAvailable)
-                    {
-                        // socket buffer is probably empty, wait and try again
-                        Thread.Sleep(30);
-                    }
-                    else if (exp.SocketErrorCode == SocketError.ConnectionAborted || exp.SocketErrorCode == SocketError.Interrupted)
-                    {
-                        break;
-                    }
-                    else
-                        throw;  // throw any other error
-                }
-            }
+            SocketAbstraction.ReadContinuous(_socket, buffer, 0, buffer.Length, SendData);
         }
 
         protected override void OnErrorOccured(Exception exp)
@@ -143,8 +101,6 @@ namespace Renci.SshNet.Channels
             ShutdownSocket(SocketShutdown.Send);
         }
 
-        partial void OpenSocket(IPEndPoint remoteEndpoint);
-
         /// <summary>
         /// Shuts down the socket.
         /// </summary>
@@ -156,10 +112,11 @@ namespace Renci.SshNet.Channels
 
             lock (_socketShutdownAndCloseLock)
             {
-                if (_socket == null || !_socket.Connected)
+                var socket = _socket;
+                if (socket == null || !socket.Connected)
                     return;
 
-                _socket.Shutdown(how);
+                socket.Shutdown(how);
             }
         }
 
@@ -173,13 +130,14 @@ namespace Renci.SshNet.Channels
 
             lock (_socketShutdownAndCloseLock)
             {
-                if (_socket == null)
-                    return;
-
-                // closing a socket actually disposes the socket, so we can safely dereference
-                // the field to avoid entering the lock again later
-                _socket.Close();
-                _socket = null;
+                var socket = _socket;
+                if (socket != null)
+                {
+                    // closing a socket actually disposes the socket, so we can safely dereference
+                    // the field to avoid entering the lock again later
+                    socket.Dispose();
+                    _socket = null;
+                }
             }
         }
 
@@ -190,9 +148,10 @@ namespace Renci.SshNet.Channels
         /// <param name="wait"><c>true</c> to wait for the SSH_MSG_CHANNEL_CLOSE message to be received from the server; otherwise, <c>false</c>.</param>
         protected override void Close(bool wait)
         {
-            if (_forwardedPort != null)
+            var forwardedPort = _forwardedPort;
+            if (forwardedPort != null)
             {
-                _forwardedPort.Closing -= ForwardedPort_Closing;
+                forwardedPort.Closing -= ForwardedPort_Closing;
                 _forwardedPort = null;
             }
 
@@ -217,31 +176,10 @@ namespace Renci.SshNet.Channels
         {
             base.OnData(data);
 
-            if (_socket != null && _socket.Connected)
-                InternalSocketSend(data);
-        }
-
-        partial void InternalSocketSend(byte[] data);
-        
-        partial void InternalSocketReceive(byte[] buffer, ref int read);
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources
-        /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected override void Dispose(bool disposing)
-        {
-            // make sure we've unsubscribed from all session events and closed the channel
-            // before we starting disposing
-            base.Dispose(disposing);
-
-            if (disposing)
+            var socket = _socket;
+            if (socket != null && socket.Connected)
             {
-                if (_socket != null)
-                {
-                    _socket.Dispose();
-                    _socket = null;
-                }
+                SocketAbstraction.Send(socket, data, 0, data.Length);
             }
         }
     }

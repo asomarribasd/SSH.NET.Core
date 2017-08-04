@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Text;
 using Renci.SshNet.Common;
 
@@ -9,9 +10,9 @@ namespace Renci.SshNet
     /// Provides connection information when password authentication method is used
     /// </summary>
     /// <example>
-    ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo" language="C#" title="Connect using username and password" />
-    ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo PasswordExpired" language="C#" title="Change password when connecting" />
-    ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo AuthenticationBanner" language="C#" title="Display authentication banner" />
+    ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo" language="C#" title="Connect using username and password" />
+    ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo PasswordExpired" language="C#" title="Change password when connecting" />
+    ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo AuthenticationBanner" language="C#" title="Display authentication banner" />
     /// </example>
     public class PasswordConnectionInfo : ConnectionInfo, IDisposable
     {
@@ -19,7 +20,7 @@ namespace Renci.SshNet
         /// Occurs when user's password has expired and needs to be changed.
         /// </summary>
         /// <example>
-        ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo PasswordExpired" language="C#" title="Change password when connecting" />
+        ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo PasswordExpired" language="C#" title="Change password when connecting" />
         /// </example>
         public event EventHandler<AuthenticationPasswordChangeEventArgs> PasswordExpired;
 
@@ -30,14 +31,13 @@ namespace Renci.SshNet
         /// <param name="username">Connection username.</param>
         /// <param name="password">Connection password.</param>
         /// <example>
-        ///     <code source="..\..\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo" language="C#" title="Connect using username and password" />
+        ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\PasswordConnectionInfoTest.cs" region="Example PasswordConnectionInfo" language="C#" title="Connect using username and password" />
         /// </example>
-        /// <exception cref="ArgumentNullException"><paramref name="password"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is null or contains whitespace characters.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="password"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
         public PasswordConnectionInfo(string host, string username, string password)
             : this(host, DefaultPort, username, Encoding.UTF8.GetBytes(password))
         {
-
         }
 
         /// <summary>
@@ -47,9 +47,9 @@ namespace Renci.SshNet
         /// <param name="port">Connection port.</param>
         /// <param name="username">Connection username.</param>
         /// <param name="password">Connection password.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="password"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is null or contains whitespace characters.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="F:System.Net.IPEndPoint.MinPort"/> and <see cref="F:System.Net.IPEndPoint.MaxPort"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="password"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="IPEndPoint.MinPort"/> and <see cref="IPEndPoint.MaxPort"/>.</exception>
         public PasswordConnectionInfo(string host, int port, string username, string password)
             : this(host, port, username, Encoding.UTF8.GetBytes(password), ProxyTypes.None, string.Empty, 0, string.Empty, string.Empty)
         {
@@ -140,7 +140,6 @@ namespace Renci.SshNet
         public PasswordConnectionInfo(string host, string username, byte[] password)
             : this(host, DefaultPort, username, password)
         {
-
         }
 
         /// <summary>
@@ -150,9 +149,9 @@ namespace Renci.SshNet
         /// <param name="port">Connection port.</param>
         /// <param name="username">Connection username.</param>
         /// <param name="password">Connection password.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="password" /> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host" /> is invalid, or <paramref name="username" /> is null or contains whitespace characters.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="password" /> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host" /> is invalid, or <paramref name="username" /> is <c>null</c> or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="IPEndPoint.MinPort" /> and <see cref="IPEndPoint.MaxPort" />.</exception>
         public PasswordConnectionInfo(string host, int port, string username, byte[] password)
             : this(host, port, username, password, ProxyTypes.None, string.Empty, 0, string.Empty, string.Empty)
         {
@@ -273,7 +272,6 @@ namespace Renci.SshNet
         public void Dispose()
         {
             Dispose(true);
-
             GC.SuppressFinalize(this);
         }
 
@@ -283,24 +281,19 @@ namespace Renci.SshNet
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            // Check to see if Dispose has already been called.
-            if (!_isDisposed)
+            if (_isDisposed)
+                return;
+
+            if (disposing)
             {
-                // If disposing equals true, dispose all managed
-                // and unmanaged resources.
-                if (disposing)
+                if (AuthenticationMethods != null)
                 {
-                    // Dispose managed resources.
-                    if (AuthenticationMethods != null)
+                    foreach (var authenticationMethods in AuthenticationMethods.OfType<IDisposable>())
                     {
-                        foreach (var authenticationMethods in AuthenticationMethods.OfType<IDisposable>())
-                        {
-                            authenticationMethods.Dispose();
-                        }
+                        authenticationMethods.Dispose();
                     }
                 }
 
-                // Note disposing has been done.
                 _isDisposed = true;
             }
         }

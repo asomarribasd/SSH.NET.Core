@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Threading;
-using Renci.SshNet.Common;
 
 namespace Renci.SshNet
 {
@@ -9,7 +7,7 @@ namespace Renci.SshNet
     /// </summary>
     public partial class ForwardedPortLocal : ForwardedPort, IDisposable
     {
-        private EventWaitHandle _listenerTaskCompleted;
+        private ForwardedPortStatus _status;
 
         /// <summary>
         /// Gets the bound host.
@@ -32,14 +30,14 @@ namespace Renci.SshNet
         public uint Port { get; private set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether port forwarding is started.
+        /// Gets a value indicating whether port forwarding is started.
         /// </summary>
         /// <value>
         /// <c>true</c> if port forwarding is started; otherwise, <c>false</c>.
         /// </value>
         public override bool IsStarted
         {
-            get { return _listenerTaskCompleted != null && !_listenerTaskCompleted.WaitOne(0); }
+            get { return _status == ForwardedPortStatus.Started; }
         }
 
         /// <summary>
@@ -52,7 +50,7 @@ namespace Renci.SshNet
         /// <exception cref="ArgumentNullException"><paramref name="host"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="port" /> is greater than <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
         /// <example>
-        ///     <code source="..\..\Renci.SshNet.Tests\Classes\ForwardedPortLocalTest.cs" region="Example SshClient AddForwardedPort Start Stop ForwardedPortLocal" language="C#" title="Local port forwarding" />
+        ///     <code source="..\..\src\Renci.SshNet.Tests\Classes\ForwardedPortLocalTest.cs" region="Example SshClient AddForwardedPort Start Stop ForwardedPortLocal" language="C#" title="Local port forwarding" />
         /// </example>
         public ForwardedPortLocal(uint boundPort, string host, uint port)
             : this(string.Empty, boundPort, host, port)
@@ -99,6 +97,7 @@ namespace Renci.SshNet
             BoundPort = boundPort;
             Host = host;
             Port = port;
+            _status = ForwardedPortStatus.Stopped;
         }
 
         /// <summary>
@@ -106,7 +105,18 @@ namespace Renci.SshNet
         /// </summary>
         protected override void StartPort()
         {
-            InternalStart();
+            if (!ForwardedPortStatus.ToStarting(ref _status))
+                return;
+
+            try
+            {
+                InternalStart();
+            }
+            catch (Exception)
+            {
+                _status = ForwardedPortStatus.Stopped;
+                throw;
+            }
         }
 
         /// <summary>
@@ -116,16 +126,17 @@ namespace Renci.SshNet
         /// <param name="timeout">The maximum amount of time to wait for pending requests to finish processing.</param>
         protected override void StopPort(TimeSpan timeout)
         {
-            if (IsStarted)
-            {
-                // prevent new requests from getting processed before we signal existing
-                // channels that the port is closing
-                StopListener();
-                // signal existing channels that the port is closing
-                base.StopPort(timeout);
-            }
+            if (!ForwardedPortStatus.ToStopping(ref _status))
+                return;
+
+            // signal existing channels that the port is closing
+            base.StopPort(timeout);
+            // prevent new requests from getting processed
+            StopListener();
             // wait for open channels to close
             InternalStop(timeout);
+            // mark port stopped
+            _status = ForwardedPortStatus.Stopped;
         }
 
         /// <summary>
@@ -163,27 +174,21 @@ namespace Renci.SshNet
             GC.SuppressFinalize(this);
         }
 
+        partial void InternalDispose(bool disposing);
+
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged ResourceMessages.</param>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
-            {
-                base.Dispose(disposing);
+            if (_isDisposed)
+                return;
 
-                if (disposing)
-                {
-                    if (_listenerTaskCompleted != null)
-                    {
-                        _listenerTaskCompleted.Dispose();
-                        _listenerTaskCompleted = null;
-                    }
-                }
+            base.Dispose(disposing);
+            InternalDispose(disposing);
 
-                _isDisposed = true;
-            }
+            _isDisposed = true;
         }
 
         /// <summary>
@@ -192,9 +197,6 @@ namespace Renci.SshNet
         /// </summary>
         ~ForwardedPortLocal()
         {
-            // Do not re-create Dispose clean-up code here.
-            // Calling Dispose(false) is optimal in terms of
-            // readability and maintainability.
             Dispose(false);
         }
 

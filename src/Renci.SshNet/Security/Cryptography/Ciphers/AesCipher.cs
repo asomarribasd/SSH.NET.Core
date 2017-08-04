@@ -561,7 +561,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// <param name="key">The key.</param>
         /// <param name="mode">The mode.</param>
         /// <param name="padding">The padding.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="key"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">Keysize is not valid for this algorithm.</exception>
         public AesCipher(byte[] key, CipherMode mode, CipherPadding padding)
             : base(key, 16, mode, padding)
@@ -583,7 +583,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// <returns>
         /// The number of bytes encrypted.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is <c>null</c>.</exception>
         /// <exception cref="IndexOutOfRangeException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is too short.</exception>
         public override int EncryptBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
         {
@@ -603,18 +603,18 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
                 throw new IndexOutOfRangeException("output buffer too short");
             }
 
-            if (this._encryptionKey == null)
+            if (_encryptionKey == null)
             {
-                this._encryptionKey = this.GenerateWorkingKey(true, this.Key);
+                _encryptionKey = GenerateWorkingKey(true, Key);
             }
 
-            this.UnPackBlock(inputBuffer, inputOffset);
+            UnPackBlock(inputBuffer, inputOffset);
 
-            this.EncryptBlock(this._encryptionKey);
+            EncryptBlock(_encryptionKey);
 
-            this.PackBlock(outputBuffer, outputOffset);
+            PackBlock(outputBuffer, outputOffset);
 
-            return this.BlockSize;
+            return BlockSize;
         }
 
         /// <summary>
@@ -628,7 +628,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
         /// <returns>
         /// The number of bytes decrypted.
         /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is <c>null</c>.</exception>
         /// <exception cref="IndexOutOfRangeException"><paramref name="inputBuffer"/> or <paramref name="outputBuffer"/> is too short.</exception>
         public override int DecryptBlock(byte[] inputBuffer, int inputOffset, int inputCount, byte[] outputBuffer, int outputOffset)
         {
@@ -648,18 +648,18 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
                 throw new IndexOutOfRangeException("output buffer too short");
             }
 
-            if (this._decryptionKey == null)
+            if (_decryptionKey == null)
             {
-                this._decryptionKey = this.GenerateWorkingKey(false, this.Key);
+                _decryptionKey = GenerateWorkingKey(false, Key);
             }
 
-            this.UnPackBlock(inputBuffer, inputOffset);
+            UnPackBlock(inputBuffer, inputOffset);
 
-            this.DecryptBlock(this._decryptionKey);
+            DecryptBlock(_decryptionKey);
 
-            this.PackBlock(outputBuffer, outputOffset);
+            PackBlock(outputBuffer, outputOffset);
 
-            return this.BlockSize;
+            return BlockSize;
         }
 
         private uint[] GenerateWorkingKey(bool isEncryption, byte[] key)
@@ -718,17 +718,17 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             return W;
         }
 
-        private uint Shift(uint r, int shift)
+        private static uint Shift(uint r, int shift)
         {
             return (r >> shift) | (r << (32 - shift));
         }
 
-        private uint FFmulX(uint x)
+        private static uint FFmulX(uint x)
         {
             return ((x & m2) << 1) ^ (((x & m1) >> 7) * m3);
         }
 
-        private uint InvMcol(uint x)
+        private static uint InvMcol(uint x)
         {
             uint f2 = FFmulX(x);
             uint f4 = FFmulX(f2);
@@ -738,7 +738,7 @@ namespace Renci.SshNet.Security.Cryptography.Ciphers
             return f2 ^ f4 ^ f8 ^ Shift(f2 ^ f9, 8) ^ Shift(f4 ^ f9, 16) ^ Shift(f9, 24);
         }
 
-        private uint SubWord(uint x)
+        private static uint SubWord(uint x)
         {
             return (uint)S[x & 255]
                 | (((uint)S[(x >> 8) & 255]) << 8)

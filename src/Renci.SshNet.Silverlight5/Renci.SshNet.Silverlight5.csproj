@@ -29,26 +29,29 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Bin\Debug</OutputPath>
-    <DefineConstants>TRACE;DEBUG;SILVERLIGHT;TUNING;FEATURE_HASH_SHA1;FEATURE_HASH_SHA256;FEATURE_HMAC_SHA1;FEATURE_HMAC_SHA256</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FEATURE_DIRECTORYINFO_ENUMERATEFILES;FEATURE_RNG_CSP;FEATURE_SOCKET_EAP;FEATURE_SOCKET_SETSOCKETOPTION;FEATURE_STREAM_APM;FEATURE_THREAD_THREADPOOL;FEATURE_THREAD_SLEEP;FEATURE_MEMORYSTREAM_GETBUFFER;FEATURE_HASH_SHA1_MANAGED;FEATURE_HASH_SHA256_MANAGED;FEATURE_HMAC_SHA1;FEATURE_HMAC_SHA256</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>Bin\Debug\Renci.SshNet.xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>Bin\Release</OutputPath>
-    <DefineConstants>TRACE;SILVERLIGHT;TUNING;FEATURE_HASH_SHA1;FEATURE_HASH_SHA256;FEATURE_HMAC_SHA1;FEATURE_HMAC_SHA256</DefineConstants>
+    <DefineConstants>TRACE;FEATURE_DIRECTORYINFO_ENUMERATEFILES;FEATURE_RNG_CSP;FEATURE_SOCKET_EAP;FEATURE_SOCKET_SETSOCKETOPTION;FEATURE_STREAM_APM;FEATURE_THREAD_THREADPOOL;FEATURE_THREAD_SLEEP;FEATURE_MEMORYSTREAM_GETBUFFER;FEATURE_HASH_SHA1_MANAGED;FEATURE_HASH_SHA256_MANAGED;FEATURE_HMAC_SHA1;FEATURE_HMAC_SHA256</DefineConstants>
     <NoStdLib>true</NoStdLib>
     <NoConfig>true</NoConfig>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>Bin\Release\Renci.SshNet.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>
+    </NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -57,13 +60,10 @@
     <AssemblyOriginatorKeyFile>..\Renci.SshNet.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files (x86)\Microsoft SDKs\Silverlight\v5.0\Libraries\Client\Microsoft.CSharp.dll</HintPath>
-    </Reference>
+    <Reference Include="Microsoft.CSharp, Version=5.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="mscorlib" />
-    <Reference Include="Renci.Security.Cryptography, Version=1.0.0.0, Culture=neutral, PublicKeyToken=50c6375d29e47192, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Renci.Security.Cryptography.1.0.0\lib\sl5\Renci.Security.Cryptography.dll</HintPath>
+    <Reference Include="SshNet.Security.Cryptography, Version=1.2.0.0, Culture=neutral, PublicKeyToken=2fa9220ff3eadda4, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SshNet.Security.Cryptography.1.2.0\lib\sl5\SshNet.Security.Cryptography.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="system" />
@@ -72,41 +72,32 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Renci.SshNet.Silverlight\Channels\ChannelDirectTcpip.SilverlightShared.cs">
-      <Link>Channels\ChannelDirectTcpip.SilverlightShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\ForwardedPortLocal.SilverlightShared.cs">
-      <Link>ForwardedPortLocal.SilverlightShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\ForwardedPortRemote.SilverlightShared.cs">
-      <Link>ForwardedPortRemote.SilverlightShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\KeyboardInteractiveAuthenticationMethod.SilverlightShared.cs">
-      <Link>KeyboardInteractiveAuthenticationMethod.SilverlightShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\PasswordAuthenticationMethod.SilverlightShared.cs">
-      <Link>PasswordAuthenticationMethod.SilverlightShared.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\ScpClient.SilverlightShared.cs">
-      <Link>ScpClient.SilverlightShared.cs</Link>
-    </Compile>
     <Compile Include="..\Renci.SshNet.Silverlight\Session.SilverlightBrowser.cs">
       <Link>Session.SilverlightBrowser.cs</Link>
     </Compile>
     <Compile Include="..\Renci.SshNet.Silverlight\Session.SilverlightShared.cs">
       <Link>Session.SilverlightShared.cs</Link>
     </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\SftpClient.SilverlightShared.cs">
-      <Link>SftpClient.SilverlightShared.cs</Link>
+    <Compile Include="..\Renci.SshNet\Abstractions\CryptoAbstraction.cs">
+      <Link>Abstractions\CryptoAbstraction.cs</Link>
     </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\Shell.SilverlightShared.cs">
-      <Link>Shell.SilverlightShared.cs</Link>
+    <Compile Include="..\Renci.SshNet\Abstractions\DiagnosticAbstraction.cs">
+      <Link>Abstractions\DiagnosticAbstraction.cs</Link>
     </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\ShellStream.SilverlightShared.cs">
-      <Link>ShellStream.SilverlightShared.cs</Link>
+    <Compile Include="..\Renci.SshNet\Abstractions\DnsAbstraction.cs">
+      <Link>Abstractions\DnsAbstraction.cs</Link>
     </Compile>
-    <Compile Include="..\Renci.SshNet.Silverlight\SshCommand.SilverlightShared.cs">
-      <Link>SshCommand.SilverlightShared.cs</Link>
+    <Compile Include="..\Renci.SshNet\Abstractions\FileSystemAbstraction.cs">
+      <Link>Abstractions\FileSystemAbstraction.cs</Link>
+    </Compile>
+    <Compile Include="..\Renci.SshNet\Abstractions\ReflectionAbstraction.cs">
+      <Link>Abstractions\ReflectionAbstraction.cs</Link>
+    </Compile>
+    <Compile Include="..\Renci.SshNet\Abstractions\SocketAbstraction.cs">
+      <Link>Abstractions\SocketAbstraction.cs</Link>
+    </Compile>
+    <Compile Include="..\Renci.SshNet\Abstractions\ThreadAbstraction.cs">
+      <Link>Abstractions\ThreadAbstraction.cs</Link>
     </Compile>
     <Compile Include="..\Renci.SshNet\AuthenticationMethod.cs">
       <Link>AuthenticationMethod.cs</Link>
@@ -159,6 +150,9 @@
     <Compile Include="..\Renci.SshNet\CommandAsyncResult.cs">
       <Link>CommandAsyncResult.cs</Link>
     </Compile>
+    <Compile Include="..\Renci.SshNet\Common\Array.cs">
+      <Link>Common\Array.cs</Link>
+    </Compile>
     <Compile Include="..\Renci.SshNet\Common\ASCIIEncoding.cs">
       <Link>Common\ASCIIEncoding.cs</Link>
     </Compile>
@@ -200,6 +194,9 @@
     </Compile>
     <Compile Include="..\Renci.SshNet\Common\ChannelRequestEventArgs.cs">
       <Link>Common\ChannelRequestEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\Renci.SshNet\Common\CountdownEvent.cs">
+      <Link>Common\CountdownEvent.cs</Link>
     </Compile>
     <Compile Include="..\Renci.SshNet\Common\DerData.cs">
       <Link>Common\DerData.cs</Link>
@@ -308,6 +305,9 @@
     </Compile>
     <Compile Include="..\Renci.SshNet\ForwardedPortRemote.cs">
       <Link>ForwardedPortRemote.cs</Link>
+    </Compile>
+    <Compile Include="..\Renci.SshNet\ForwardedPortStatus.cs">
+      <Link>ForwardedPortStatus.cs</Link>
     </Compile>
     <Compile Include="..\Renci.SshNet\HashInfo.cs">
       <Link>HashInfo.cs</Link>
@@ -657,9 +657,6 @@
     <Compile Include="..\Renci.SshNet\Security\Cryptography\DsaKey.cs">
       <Link>Security\Cryptography\DsaKey.cs</Link>
     </Compile>
-    <Compile Include="..\Renci.SshNet\Security\Cryptography\HashAlgorithmFactory.cs">
-      <Link>Security\Cryptography\HashAlgorithmFactory.cs</Link>
-    </Compile>
     <Compile Include="..\Renci.SshNet\Security\Cryptography\HMACMD5.cs">
       <Link>Security\Cryptography\HMACMD5.cs</Link>
     </Compile>
@@ -722,9 +719,6 @@
     </Compile>
     <Compile Include="..\Renci.SshNet\Security\KeyExchangeDiffieHellmanGroupSha1.cs">
       <Link>Security\KeyExchangeDiffieHellmanGroupSha1.cs</Link>
-    </Compile>
-    <Compile Include="..\Renci.SshNet\Security\KeyExchangeEllipticCurveDiffieHellman.cs">
-      <Link>Security\KeyExchangeEllipticCurveDiffieHellman.cs</Link>
     </Compile>
     <Compile Include="..\Renci.SshNet\Security\KeyHostAlgorithm.cs">
       <Link>Security\KeyHostAlgorithm.cs</Link>
@@ -906,6 +900,9 @@
     <Compile Include="..\Renci.SshNet\SshCommand.cs">
       <Link>SshCommand.cs</Link>
     </Compile>
+    <Compile Include="..\Renci.SshNet\SshMessageFactory.cs">
+      <Link>SshMessageFactory.cs</Link>
+    </Compile>
     <Compile Include="..\Renci.SshNet\SubsystemSession.cs">
       <Link>SubsystemSession.cs</Link>
     </Compile>
@@ -926,7 +923,7 @@
       <FlavorProperties GUID="{A1591282-1198-4647-A2B1-27E5FF5F6F3B}">
         <SilverlightProjectProperties />
       </FlavorProperties>
-      <UserProperties ProjectLinkerExcludeFilter="\\?desktop(\\.*)?$;\\?silverlight(\\.*)?$;\.desktop;\.silverlight;\.xaml;^service references(\\.*)?$;\.clientconfig;^web references(\\.*)?$" ProjectLinkReference="2f5f8c90-0bd1-424f-997c-7bc6280919d1" />
+      <UserProperties ProjectLinkReference="2f5f8c90-0bd1-424f-997c-7bc6280919d1" ProjectLinkerExcludeFilter="\\?desktop(\\.*)?$;\\?silverlight(\\.*)?$;\.desktop;\.silverlight;\.xaml;^service references(\\.*)?$;\.clientconfig;^web references(\\.*)?$" />
     </VisualStudio>
   </ProjectExtensions>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

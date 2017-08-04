@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Collections.ObjectModel;
 using Renci.SshNet.Messages.Authentication;
 using Renci.SshNet.Messages;
@@ -15,9 +14,7 @@ namespace Renci.SshNet
     public class PrivateKeyAuthenticationMethod : AuthenticationMethod, IDisposable
     {
         private AuthenticationResult _authenticationResult = AuthenticationResult.Failure;
-
         private EventWaitHandle _authenticationCompleted = new ManualResetEvent(false);
-
         private bool _isSignatureRequired;
 
         /// <summary>
@@ -38,7 +35,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="username">The username.</param>
         /// <param name="keyFiles">The key files.</param>
-        /// <exception cref="ArgumentException"><paramref name="username"/> is whitespace or null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="username"/> is whitespace or <c>null</c>.</exception>
         public PrivateKeyAuthenticationMethod(string username, params PrivateKeyFile[] keyFiles)
             : base(username)
         {
@@ -63,55 +60,65 @@ namespace Renci.SshNet
 
             session.RegisterMessage("SSH_MSG_USERAUTH_PK_OK");
 
-            foreach (var keyFile in KeyFiles)
+            try
             {
-                _authenticationCompleted.Reset();
-                _isSignatureRequired = false;
-
-                var message = new RequestMessagePublicKey(ServiceName.Connection, Username, keyFile.HostKey.Name, keyFile.HostKey.Data);
-
-                if (KeyFiles.Count < 2)
-                {
-                    //  If only one key file provided then send signature for very first request
-                    var signatureData = new SignatureData(message, session.SessionId).GetBytes();
-
-                    message.Signature = keyFile.HostKey.Sign(signatureData);
-                }
-
-                //  Send public key authentication request
-                session.SendMessage(message);
-
-                session.WaitOnHandle(_authenticationCompleted);
-
-                if (_isSignatureRequired)
+                foreach (var keyFile in KeyFiles)
                 {
                     _authenticationCompleted.Reset();
+                    _isSignatureRequired = false;
 
-                    var signatureMessage = new RequestMessagePublicKey(ServiceName.Connection, Username, keyFile.HostKey.Name, keyFile.HostKey.Data);
+                    var message = new RequestMessagePublicKey(ServiceName.Connection,
+                                                              Username,
+                                                              keyFile.HostKey.Name,
+                                                              keyFile.HostKey.Data);
 
-                    var signatureData = new SignatureData(message, session.SessionId).GetBytes();
+                    if (KeyFiles.Count < 2)
+                    {
+                        //  If only one key file provided then send signature for very first request
+                        var signatureData = new SignatureData(message, session.SessionId).GetBytes();
 
-                    signatureMessage.Signature = keyFile.HostKey.Sign(signatureData);
+                        message.Signature = keyFile.HostKey.Sign(signatureData);
+                    }
 
-                    //  Send public key authentication request with signature
-                    session.SendMessage(signatureMessage);
+                    //  Send public key authentication request
+                    session.SendMessage(message);
+
+                    session.WaitOnHandle(_authenticationCompleted);
+
+                    if (_isSignatureRequired)
+                    {
+                        _authenticationCompleted.Reset();
+
+                        var signatureMessage = new RequestMessagePublicKey(ServiceName.Connection,
+                                                                           Username,
+                                                                           keyFile.HostKey.Name,
+                                                                           keyFile.HostKey.Data);
+
+                        var signatureData = new SignatureData(message, session.SessionId).GetBytes();
+
+                        signatureMessage.Signature = keyFile.HostKey.Sign(signatureData);
+
+                        //  Send public key authentication request with signature
+                        session.SendMessage(signatureMessage);
+                    }
+
+                    session.WaitOnHandle(_authenticationCompleted);
+
+                    if (_authenticationResult == AuthenticationResult.Success)
+                    {
+                        break;
+                    }
                 }
 
-                session.WaitOnHandle(_authenticationCompleted);
-
-                if (_authenticationResult == AuthenticationResult.Success)
-                {
-                    break;
-                }
+                return _authenticationResult;
             }
-            
-            session.UserAuthenticationSuccessReceived -= Session_UserAuthenticationSuccessReceived;
-            session.UserAuthenticationFailureReceived -= Session_UserAuthenticationFailureReceived;
-            session.MessageReceived -= Session_MessageReceived;
-
-            session.UnRegisterMessage("SSH_MSG_USERAUTH_PK_OK");
-
-            return _authenticationResult;
+            finally
+            {
+                session.UserAuthenticationSuccessReceived -= Session_UserAuthenticationSuccessReceived;
+                session.UserAuthenticationFailureReceived -= Session_UserAuthenticationFailureReceived;
+                session.MessageReceived -= Session_MessageReceived;
+                session.UnRegisterMessage("SSH_MSG_USERAUTH_PK_OK");
+            }
         }
 
         private void Session_UserAuthenticationSuccessReceived(object sender, MessageEventArgs<SuccessMessage> e)
@@ -129,7 +136,7 @@ namespace Renci.SshNet
                 _authenticationResult = AuthenticationResult.Failure;
 
             //  Copy allowed authentication methods
-            AllowedAuthentications = e.Message.AllowedAuthentications.ToList();
+            AllowedAuthentications = e.Message.AllowedAuthentications;
 
             _authenticationCompleted.Set();
         }
@@ -154,7 +161,6 @@ namespace Renci.SshNet
         public void Dispose()
         {
             Dispose(true);
-
             GC.SuppressFinalize(this);
         }
 
@@ -164,22 +170,18 @@ namespace Renci.SshNet
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            // Check to see if Dispose has already been called.
-            if (!_isDisposed)
+            if (_isDisposed)
+                return;
+
+            if (disposing)
             {
-                // If disposing equals true, dispose all managed
-                // and unmanaged resources.
-                if (disposing)
+                var authenticationCompleted = _authenticationCompleted;
+                if (authenticationCompleted != null)
                 {
-                    // Dispose managed resources.
-                    if (_authenticationCompleted != null)
-                    {
-                        _authenticationCompleted.Dispose();
-                        _authenticationCompleted = null;
-                    }
+                    _authenticationCompleted = null;
+                    authenticationCompleted.Dispose();
                 }
 
-                // Note disposing has been done.
                 _isDisposed = true;
             }
         }
@@ -190,9 +192,6 @@ namespace Renci.SshNet
         /// </summary>
         ~PrivateKeyAuthenticationMethod()
         {
-            // Do not re-create Dispose clean-up code here.
-            // Calling Dispose(false) is optimal in terms of
-            // readability and maintainability.
             Dispose(false);
         }
 
@@ -206,30 +205,28 @@ namespace Renci.SshNet
             private readonly byte[] _serviceName;
             private readonly byte[] _authenticationMethod;
 
-#if TUNING
-        protected override int BufferCapacity
-        {
-            get
+            protected override int BufferCapacity
             {
-                var capacity = base.BufferCapacity;
-                capacity += 4; // SessionId length
-                capacity += _sessionId.Length; // SessionId
-                capacity += 1; // Authentication Message Code
-                capacity += 4; // UserName length
-                capacity += _message.Username.Length; // UserName
-                capacity += 4; // ServiceName length
-                capacity += _serviceName.Length; // ServiceName
-                capacity += 4; // AuthenticationMethod length
-                capacity += _authenticationMethod.Length; // AuthenticationMethod
-                capacity += 1; // TRUE
-                capacity += 4; // PublicKeyAlgorithmName length
-                capacity += _message.PublicKeyAlgorithmName.Length; // PublicKeyAlgorithmName
-                capacity += 4; // PublicKeyData length
-                capacity += _message.PublicKeyData.Length; // PublicKeyData
-                return capacity;
+                get
+                {
+                    var capacity = base.BufferCapacity;
+                    capacity += 4; // SessionId length
+                    capacity += _sessionId.Length; // SessionId
+                    capacity += 1; // Authentication Message Code
+                    capacity += 4; // UserName length
+                    capacity += _message.Username.Length; // UserName
+                    capacity += 4; // ServiceName length
+                    capacity += _serviceName.Length; // ServiceName
+                    capacity += 4; // AuthenticationMethod length
+                    capacity += _authenticationMethod.Length; // AuthenticationMethod
+                    capacity += 1; // TRUE
+                    capacity += 4; // PublicKeyAlgorithmName length
+                    capacity += _message.PublicKeyAlgorithmName.Length; // PublicKeyAlgorithmName
+                    capacity += 4; // PublicKeyData length
+                    capacity += _message.PublicKeyData.Length; // PublicKeyData
+                    return capacity;
+                }
             }
-        }
-#endif
 
             public SignatureData(RequestMessagePublicKey message, byte[] sessionId)
             {
@@ -256,6 +253,5 @@ namespace Renci.SshNet
                 WriteBinaryString(_message.PublicKeyData);
             }
         }
-
     }
 }

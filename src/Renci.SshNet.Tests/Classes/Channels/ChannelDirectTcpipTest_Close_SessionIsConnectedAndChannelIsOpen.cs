@@ -16,6 +16,7 @@ namespace Renci.SshNet.Tests.Classes.Channels
     {
         private Mock<ISession> _sessionMock;
         private Mock<IForwardedPort> _forwardedPortMock;
+        private Mock<IConnectionInfo> _connectionInfoMock;
         private ChannelDirectTcpip _channel;
         private uint _localChannelNumber;
         private uint _localWindowSize;
@@ -72,6 +73,7 @@ namespace Renci.SshNet.Tests.Classes.Channels
 
             _sessionMock = new Mock<ISession>(MockBehavior.Strict);
             _forwardedPortMock = new Mock<IForwardedPort>(MockBehavior.Strict);
+            _connectionInfoMock = new Mock<IConnectionInfo>(MockBehavior.Strict);
 
             var sequence = new MockSequence();
             _sessionMock.InSequence(sequence).Setup(p => p.IsConnected).Returns(true);
@@ -164,7 +166,6 @@ namespace Renci.SshNet.Tests.Classes.Channels
             if (_channel != null)
             {
                 _channel.Close();
-
             }
         }
 

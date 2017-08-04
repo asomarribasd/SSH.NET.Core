@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 using Renci.SshNet.Channels;
 using System.IO;
 using Renci.SshNet.Common;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 
 namespace Renci.SshNet
 {
@@ -51,7 +50,7 @@ namespace Renci.SshNet
         /// Initializes a new instance of the <see cref="SftpClient"/> class.
         /// </summary>
         /// <param name="connectionInfo">The connection info.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is <c>null</c>.</exception>
         public ScpClient(ConnectionInfo connectionInfo)
             : this(connectionInfo, false)
         {
@@ -64,9 +63,9 @@ namespace Renci.SshNet
         /// <param name="port">Connection port.</param>
         /// <param name="username">Authentication username.</param>
         /// <param name="password">Authentication password.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="password"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is null or contains whitespace characters.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="F:System.Net.IPEndPoint.MinPort"/> and <see cref="System.Net.IPEndPoint.MaxPort"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="password"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="IPEndPoint.MinPort"/> and <see cref="IPEndPoint.MaxPort"/>.</exception>
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "Disposed in Dispose(bool) method.")]
         public ScpClient(string host, int port, string username, string password)
             : this(new PasswordConnectionInfo(host, port, username, password), true)
@@ -79,8 +78,8 @@ namespace Renci.SshNet
         /// <param name="host">Connection host.</param>
         /// <param name="username">Authentication username.</param>
         /// <param name="password">Authentication password.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="password"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is null or contains whitespace characters.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="password"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, or <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
         public ScpClient(string host, string username, string password)
             : this(host, ConnectionInfo.DefaultPort, username, password)
         {
@@ -93,9 +92,9 @@ namespace Renci.SshNet
         /// <param name="port">Connection port.</param>
         /// <param name="username">Authentication username.</param>
         /// <param name="keyFiles">Authentication private key file(s) .</param>
-        /// <exception cref="ArgumentNullException"><paramref name="keyFiles"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, -or- <paramref name="username"/> is null or contains whitespace characters.</exception>
-        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="F:System.Net.IPEndPoint.MinPort"/> and <see cref="System.Net.IPEndPoint.MaxPort"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="keyFiles"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, -or- <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="port"/> is not within <see cref="IPEndPoint.MinPort"/> and <see cref="IPEndPoint.MaxPort"/>.</exception>
         [SuppressMessage("Microsoft.Reliability", "CA2000:DisposeObjectsBeforeLosingScope", Justification = "Disposed in Dispose(bool) method.")]
         public ScpClient(string host, int port, string username, params PrivateKeyFile[] keyFiles)
             : this(new PrivateKeyConnectionInfo(host, port, username, keyFiles), true)
@@ -108,8 +107,8 @@ namespace Renci.SshNet
         /// <param name="host">Connection host.</param>
         /// <param name="username">Authentication username.</param>
         /// <param name="keyFiles">Authentication private key file(s) .</param>
-        /// <exception cref="ArgumentNullException"><paramref name="keyFiles"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, -or- <paramref name="username"/> is null or contains whitespace characters.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="keyFiles"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="host"/> is invalid, -or- <paramref name="username"/> is <c>null</c> or contains only whitespace characters.</exception>
         public ScpClient(string host, string username, params PrivateKeyFile[] keyFiles)
             : this(host, ConnectionInfo.DefaultPort, username, keyFiles)
         {
@@ -120,7 +119,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="connectionInfo">The connection info.</param>
         /// <param name="ownsConnectionInfo">Specified whether this instance owns the connection info.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is <c>null</c>.</exception>
         /// <remarks>
         /// If <paramref name="ownsConnectionInfo"/> is <c>true</c>, then the
         /// connection info will be disposed when this instance is disposed.
@@ -136,8 +135,8 @@ namespace Renci.SshNet
         /// <param name="connectionInfo">The connection info.</param>
         /// <param name="ownsConnectionInfo">Specified whether this instance owns the connection info.</param>
         /// <param name="serviceFactory">The factory to use for creating new services.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is null.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="serviceFactory"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="serviceFactory"/> is <c>null</c>.</exception>
         /// <remarks>
         /// If <paramref name="ownsConnectionInfo"/> is <c>true</c>, then the
         /// connection info will be disposed when this instance is disposed.
@@ -145,7 +144,7 @@ namespace Renci.SshNet
         internal ScpClient(ConnectionInfo connectionInfo, bool ownsConnectionInfo, IServiceFactory serviceFactory)
             : base(connectionInfo, ownsConnectionInfo, serviceFactory)
         {
-            OperationTimeout = new TimeSpan(0, 0, 0, 0, -1);
+            OperationTimeout = SshNet.Session.InfiniteTimeSpan;
             BufferSize = 1024 * 16;
 
             if (_byteToChar == null)
@@ -171,12 +170,7 @@ namespace Renci.SshNet
             using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 var pathEnd = path.LastIndexOfAny(new[] { '\\', '/' });
@@ -203,9 +197,12 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="filename">Remote host file name.</param>
         /// <param name="destination">The stream where to download remote file.</param>
-        /// <exception cref="ArgumentException"><paramref name="filename"/> is null or contains whitespace characters.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="destination"/> is null.</exception>
-        /// <remarks>Method calls made by this method to <paramref name="destination"/>, may under certain conditions result in exceptions thrown by the stream.</remarks>
+        /// <exception cref="ArgumentException"><paramref name="filename"/> is <c>null</c> or contains only whitespace characters.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="destination"/> is <c>null</c>.</exception>
+        /// <remarks>
+        /// Method calls made by this method to <paramref name="destination"/>, may under certain conditions result
+        /// in exceptions thrown by the stream.
+        /// </remarks>
         public void Download(string filename, Stream destination)
         {
             if (filename.IsNullOrWhiteSpace())
@@ -214,15 +211,10 @@ namespace Renci.SshNet
             if (destination == null)
                 throw new ArgumentNullException("destination");
 
-            using (var input = new PipeStream())
+            using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 //  Send channel command request
@@ -252,11 +244,11 @@ namespace Renci.SshNet
             }
         }
 
-        private void InternalSetTimestamp(IChannelSession channel, Stream input, DateTime lastWriteTime, DateTime lastAccessime)
+        private static void InternalSetTimestamp(IChannelSession channel, Stream input, DateTime lastWriteTime, DateTime lastAccessime)
         {
             var zeroTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            var modificationSeconds = (long)(lastWriteTime - zeroTime).TotalSeconds;
-            var accessSeconds = (long)(lastAccessime - zeroTime).TotalSeconds;
+            var modificationSeconds = (long) (lastWriteTime - zeroTime).TotalSeconds;
+            var accessSeconds = (long) (lastAccessime - zeroTime).TotalSeconds;
             SendData(channel, string.Format("T{0} 0 {1} 0\n", modificationSeconds, accessSeconds));
             CheckReturnCode(input);
         }
@@ -289,14 +281,14 @@ namespace Renci.SshNet
             CheckReturnCode(input);
         }
 
-        private void InternalDownload(IChannelSession channel, Stream input, Stream output, string filename, long length)
+        private void InternalDownload(IChannel channel, Stream input, Stream output, string filename, long length)
         {
             var buffer = new byte[Math.Min(length, BufferSize)];
             var needToRead = length;
 
             do
             {
-                var read = input.Read(buffer, 0, (int)Math.Min(needToRead, BufferSize));
+                var read = input.Read(buffer, 0, (int) Math.Min(needToRead, BufferSize));
 
                 output.Write(buffer, 0, read);
 
@@ -333,12 +325,12 @@ namespace Renci.SshNet
             }
         }
 
-        private void SendConfirmation(IChannelSession channel)
+        private static void SendConfirmation(IChannel channel)
         {
             SendData(channel, new byte[] { 0 });
         }
 
-        private void SendConfirmation(IChannelSession channel, byte errorCode, string message)
+        private static void SendConfirmation(IChannel channel, byte errorCode, string message)
         {
             SendData(channel, new[] { errorCode });
             SendData(channel, string.Format("{0}\n", message));
@@ -348,7 +340,7 @@ namespace Renci.SshNet
         /// Checks the return code.
         /// </summary>
         /// <param name="input">The output stream.</param>
-        private void CheckReturnCode(Stream input)
+        private static void CheckReturnCode(Stream input)
         {
             var b = ReadByte(input);
 
@@ -360,25 +352,17 @@ namespace Renci.SshNet
             }
         }
 
-        partial void SendData(IChannelSession channel, string command);
-
-        private void SendData(IChannelSession channel, byte[] buffer, int length)
+        private static void SendData(IChannel channel, string command)
         {
-#if TUNING
-            channel.SendData(buffer, 0, length);
-#else
-            if (length == buffer.Length)
-            {
-                channel.SendData(buffer);
-            }
-            else
-            {
-                channel.SendData(buffer.Take(length).ToArray());
-            }
-#endif
+            channel.SendData(SshData.Utf8.GetBytes(command));
         }
 
-        private void SendData(IChannelSession channel, byte[] buffer)
+        private static void SendData(IChannel channel, byte[] buffer, int length)
+        {
+            channel.SendData(buffer, 0, length);
+        }
+
+        private static void SendData(IChannel channel, byte[] buffer)
         {
             channel.SendData(buffer);
         }
@@ -386,13 +370,8 @@ namespace Renci.SshNet
         private static int ReadByte(Stream stream)
         {
             var b = stream.ReadByte();
-
-            while (b < 0)
-            {
-                Thread.Sleep(100);
-                b = stream.ReadByte();
-            }
-
+            if (b == -1)
+                throw new SshException("Stream has been closed.");
             return b;
         }
 

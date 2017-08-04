@@ -10,7 +10,7 @@ namespace Renci.SshNet.Channels
     internal interface IChannel : IDisposable
     {
         /// <summary>
-        /// Occurs when <see cref="ChannelDataMessage"/> message received
+        /// Occurs when <see cref="ChannelDataMessage"/> is received.
         /// </summary>
         event EventHandler<ChannelDataEventArgs> DataReceived;
 
@@ -20,17 +20,17 @@ namespace Renci.SshNet.Channels
         event EventHandler<ExceptionEventArgs> Exception;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelExtendedDataMessage"/> message received
+        /// Occurs when <see cref="ChannelExtendedDataMessage"/> is received.
         /// </summary>
         event EventHandler<ChannelExtendedDataEventArgs> ExtendedDataReceived;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelRequestMessage"/> message received
+        /// Occurs when <see cref="ChannelRequestMessage"/> is received.
         /// </summary>
         event EventHandler<ChannelRequestEventArgs> RequestReceived;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelCloseMessage"/> message received
+        /// Occurs when <see cref="ChannelCloseMessage"/> is received.
         /// </summary>
         event EventHandler<ChannelEventArgs> Closed;
 
@@ -79,7 +79,6 @@ namespace Renci.SshNet.Channels
         /// <param name="data">The payload to send.</param>
         void SendData(byte[] data);
 
-#if TUNING
         /// <summary>
         /// Sends a SSH_MSG_CHANNEL_DATA message with the specified payload.
         /// </summary>
@@ -99,7 +98,6 @@ namespace Renci.SshNet.Channels
         /// </para>
         /// </remarks>
         void SendData(byte[] data, int offset, int size);
-#endif
 
         /// <summary>
         /// Sends a SSH_MSG_CHANNEL_EOF message to the remote server.

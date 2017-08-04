@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.IO;
 using Renci.SshNet.Channels;
 using Renci.SshNet.Common;
 using System.Threading;
 using System.Text.RegularExpressions;
+using Renci.SshNet.Abstractions;
 
 namespace Renci.SshNet
 {
     /// <summary>
     /// Contains operation for working with SSH Shell.
     /// </summary>
-    public partial class ShellStream : Stream
+    public class ShellStream : Stream
     {
         private const string CrLf = "\r\n";
         private const int BufferSize = 1024;
@@ -24,6 +24,7 @@ namespace Renci.SshNet
         private readonly Queue<byte> _outgoing;
         private IChannelSession _channel;
         private AutoResetEvent _dataReceived = new AutoResetEvent(false);
+        private bool _isDisposed;
 
         /// <summary>
         /// Occurs when data was received.
@@ -52,7 +53,7 @@ namespace Renci.SshNet
             }
         }
 
-        internal ShellStream(ISession session, string terminalName, uint columns, uint rows, uint width, uint height, int bufferSize, IDictionary<TerminalModes, uint> terminalModeValues)
+        internal ShellStream(ISession session, string terminalName, uint columns, uint rows, uint width, uint height, IDictionary<TerminalModes, uint> terminalModeValues)
         {
             _encoding = session.ConnectionInfo.Encoding;
             _session = session;
@@ -161,7 +162,7 @@ namespace Renci.SshNet
         /// The total number of bytes read into the buffer. This can be less than the number of bytes requested if that many bytes are not currently available, or zero (0) if the end of the stream has been reached.
         /// </returns>
         /// <exception cref="T:System.ArgumentException">The sum of <paramref name="offset"/> and <paramref name="count"/> is larger than the buffer length. </exception>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is <c>null</c>.</exception>
         /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="offset"/> or <paramref name="count"/> is negative.</exception>
         /// <exception cref="T:System.IO.IOException">An I/O error occurs.</exception>   
         /// <exception cref="T:System.NotSupportedException">The stream does not support reading.</exception>   
@@ -216,14 +217,14 @@ namespace Renci.SshNet
         /// <param name="offset">The zero-based byte offset in <paramref name="buffer"/> at which to begin copying bytes to the current stream.</param>
         /// <param name="count">The number of bytes to be written to the current stream.</param>
         /// <exception cref="T:System.ArgumentException">The sum of <paramref name="offset"/> and <paramref name="count"/> is greater than the buffer length.</exception>
-        /// <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is null.</exception>
+        /// <exception cref="T:System.ArgumentNullException"><paramref name="buffer"/> is <c>null</c>.</exception>
         /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="offset"/> or <paramref name="count"/> is negative.</exception>
         /// <exception cref="T:System.IO.IOException">An I/O error occurs.</exception>
         /// <exception cref="T:System.NotSupportedException">The stream does not support writing.</exception>
         /// <exception cref="T:System.ObjectDisposedException">Methods were called after the stream was closed.</exception>
         public override void Write(byte[] buffer, int offset, int count)
         {
-            foreach (var b in buffer.Skip(offset).Take(count).ToArray())
+            foreach (var b in buffer.Take(offset, count))
             {
                 if (_outgoing.Count < BufferSize)
                 {
@@ -363,7 +364,7 @@ namespace Renci.SshNet
             var asyncResult = new ExpectAsyncResult(callback, state);
 
             //  Execute callback on different thread
-            ExecuteThread(() =>
+            ThreadAbstraction.ExecuteThread(() =>
             {
                 string expectActionResult = null;
                 try
@@ -442,7 +443,7 @@ namespace Renci.SshNet
         /// Ends the execute.
         /// </summary>
         /// <param name="asyncResult">The async result.</param>
-        /// <exception cref="System.ArgumentException">Either the IAsyncResult object did not come from the corresponding async method on this type, or EndExecute was called multiple times with the same IAsyncResult.</exception>
+        /// <exception cref="ArgumentException">Either the IAsyncResult object did not come from the corresponding async method on this type, or EndExecute was called multiple times with the same IAsyncResult.</exception>
         public string EndExpect(IAsyncResult asyncResult)
         {
             var ar = asyncResult as ExpectAsyncResult;
@@ -463,7 +464,7 @@ namespace Renci.SshNet
         /// </returns>
         public string Expect(string text)
         {
-            return Expect(new Regex(Regex.Escape(text)), TimeSpan.FromMilliseconds(-1));
+            return Expect(new Regex(Regex.Escape(text)), Session.InfiniteTimeSpan);
         }
 
         /// <summary>
@@ -472,7 +473,7 @@ namespace Renci.SshNet
         /// <param name="text">The text to expect.</param>
         /// <param name="timeout">Time to wait for input.</param>
         /// <returns>
-        /// Text available in the shell that ends with expected text, if the specified time elapsed returns null.
+        /// The text available in the shell that ends with expected text, or <c>null</c> if the specified time has elapsed.
         /// </returns>
         public string Expect(string text, TimeSpan timeout)
         {
@@ -483,7 +484,9 @@ namespace Renci.SshNet
         /// Expects the expression specified by regular expression.
         /// </summary>
         /// <param name="regex">The regular expression to expect.</param>
-        /// <returns>Text available in the shell that contains all the text that ends with expected expression.</returns>
+        /// <returns>
+        /// The text available in the shell that contains all the text that ends with expected expression.
+        /// </returns>
         public string Expect(Regex regex)
         {
             return Expect(regex, TimeSpan.Zero);
@@ -495,7 +498,8 @@ namespace Renci.SshNet
         /// <param name="regex">The regular expression to expect.</param>
         /// <param name="timeout">Time to wait for input.</param>
         /// <returns>
-        /// Text available in the shell that contains all the text that ends with expected expression, if the specified time elapsed returns null.
+        /// The text available in the shell that contains all the text that ends with expected expression,
+        /// or <c>null</c> if the specified time has elapsed.
         /// </returns>
         public string Expect(Regex regex, TimeSpan timeout)
         {
@@ -666,28 +670,50 @@ namespace Renci.SshNet
         {
             base.Dispose(disposing);
 
-            if (_session != null)
-            {
-                _session.Disconnected -= Session_Disconnected;
-                _session.ErrorOccured -= Session_ErrorOccured;
-            }
+            if (_isDisposed)
+                return;
 
-            if (_channel != null)
+            if (disposing)
             {
-                _channel.DataReceived -= Channel_DataReceived;
-                _channel.Closed -= Channel_Closed;
-                _channel.Dispose();
-                _channel = null;
-            }
+                UnsubscribeFromSessionEvents(_session);
 
-            if (_dataReceived != null)
+                if (_channel != null)
+                {
+                    _channel.DataReceived -= Channel_DataReceived;
+                    _channel.Closed -= Channel_Closed;
+                    _channel.Dispose();
+                    _channel = null;
+                }
+
+                if (_dataReceived != null)
+                {
+                    _dataReceived.Dispose();
+                    _dataReceived = null;
+                }
+
+                _isDisposed = true;
+            }
+            else
             {
-                _dataReceived.Dispose();
-                _dataReceived = null;
+                UnsubscribeFromSessionEvents(_session);
             }
         }
 
-        partial void ExecuteThread(Action action);
+        /// <summary>
+        /// Unsubscribes the current <see cref="ShellStream"/> from session events.
+        /// </summary>
+        /// <param name="session">The session.</param>
+        /// <remarks>
+        /// Does nothing when <paramref name="session"/> is <c>null</c>.
+        /// </remarks>
+        private void UnsubscribeFromSessionEvents(ISession session)
+        {
+            if (session == null)
+                return;
+
+            session.Disconnected -= Session_Disconnected;
+            session.ErrorOccured -= Session_ErrorOccured;
+        }
 
         private void Session_ErrorOccured(object sender, ExceptionEventArgs e)
         {

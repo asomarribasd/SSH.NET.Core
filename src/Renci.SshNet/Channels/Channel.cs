@@ -214,37 +214,37 @@ namespace Renci.SshNet.Channels
         #region Message events
 
         /// <summary>
-        /// Occurs when <see cref="ChannelDataMessage"/> message received
+        /// Occurs when <see cref="ChannelDataMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelDataEventArgs> DataReceived;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelExtendedDataMessage"/> message received
+        /// Occurs when <see cref="ChannelExtendedDataMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelExtendedDataEventArgs> ExtendedDataReceived;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelEofMessage"/> message received
+        /// Occurs when <see cref="ChannelEofMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelEventArgs> EndOfData;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelCloseMessage"/> message received
+        /// Occurs when <see cref="ChannelCloseMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelEventArgs> Closed;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelRequestMessage"/> message received
+        /// Occurs when <see cref="ChannelRequestMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelRequestEventArgs> RequestReceived;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelSuccessMessage"/> message received
+        /// Occurs when <see cref="ChannelSuccessMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelEventArgs> RequestSucceeded;
 
         /// <summary>
-        /// Occurs when <see cref="ChannelFailureMessage"/> message received
+        /// Occurs when <see cref="ChannelFailureMessage"/> is received.
         /// </summary>
         public event EventHandler<ChannelEventArgs> RequestFailed;
 
@@ -271,7 +271,7 @@ namespace Renci.SshNet.Channels
         }
 
         /// <summary>
-        /// Gets the session semaphore to control number of session channels
+        /// Gets the session semaphore to control number of session channels.
         /// </summary>
         /// <value>The session semaphore.</value>
         protected SemaphoreLight SessionSemaphore
@@ -292,14 +292,9 @@ namespace Renci.SshNet.Channels
         /// <param name="data">The payload to send.</param>
         public void SendData(byte[] data)
         {
-#if TUNING
             SendData(data, 0, data.Length);
-#else
-            SendMessage(new ChannelDataMessage(RemoteChannelNumber, data));
-#endif
         }
 
-#if TUNING
         /// <summary>
         /// Sends a SSH_MSG_CHANNEL_DATA message with the specified payload.
         /// </summary>
@@ -340,7 +335,6 @@ namespace Renci.SshNet.Channels
                 offset += sizeOfCurrentMessage;
             }
         }
-#endif
 
         /// <summary>
         /// Closes the channel.
@@ -450,7 +444,7 @@ namespace Renci.SshNet.Channels
                 requestFailed(this, new ChannelEventArgs(LocalChannelNumber));
         }
 
-        #endregion
+        #endregion // Channel virtual methods
 
         /// <summary>
         /// Raises <see cref="Channel.Exception"/> event.
@@ -495,55 +489,6 @@ namespace Renci.SshNet.Channels
             _session.SendMessage(message);
         }
 
-#if !TUNING
-        /// <summary>
-        /// Sends channel data message to the servers.
-        /// </summary>
-        /// <param name="message">Channel data message.</param>
-        /// <remarks>
-        /// <para>
-        /// When the data of the message exceeds the maximum packet size or the remote window
-        /// size does not allow the full message to be sent, then this method will send the
-        /// data in multiple chunks and will only wait for the remote window size to be adjusted
-        /// when its zero.
-        /// </para>
-        /// <para>
-        /// This is done to support SSH servers will a small window size that do not agressively
-        /// increase their window size. We need to take into account that there may be SSH
-        /// servers that only increase their window size when it has reached zero.
-        /// </para>
-        /// </remarks>
-        protected void SendMessage(ChannelDataMessage message)
-        {
-            // send channel messages only while channel is open
-            if (!IsOpen)
-                return;
-
-            var totalDataLength = message.Data.Length;
-            var totalDataSent = 0;
-
-            var totalBytesToSend = totalDataLength;
-            while (totalBytesToSend > 0)
-            {
-                var dataThatCanBeSentInMessage = GetDataLengthThatCanBeSentInMessage(totalBytesToSend);
-                if (dataThatCanBeSentInMessage == totalDataLength)
-                {
-                    // we can send the message in one chunk
-                    _session.SendMessage(message);
-                }
-                else
-                {
-                    // we need to send the message in multiple chunks
-                    var dataToSend = new byte[dataThatCanBeSentInMessage];
-                    Array.Copy(message.Data, totalDataSent, dataToSend, 0, dataThatCanBeSentInMessage);
-                    _session.SendMessage(new ChannelDataMessage(message.LocalChannelNumber, dataToSend));
-                }
-                totalDataSent += dataThatCanBeSentInMessage;
-                totalBytesToSend -= dataThatCanBeSentInMessage;
-            }
-        }
-#endif
-
         /// <summary>
         /// Sends a SSH_MSG_CHANNEL_EOF message to the remote server.
         /// </summary>
@@ -555,54 +500,6 @@ namespace Renci.SshNet.Channels
 
             _session.SendMessage(new ChannelEofMessage(RemoteChannelNumber));
             _eofMessageSent = Sent;
-        }
-
-        /// <summary>
-        /// Sends channel extended data message to the servers.
-        /// </summary>
-        /// <param name="message">Channel data message.</param>
-        /// <remarks>
-        /// <para>
-        /// When the data of the message exceeds the maximum packet size or the remote window
-        /// size does not allow the full message to be sent, then this method will send the
-        /// data in multiple chunks and will only wait for the remote window size to be adjusted
-        /// when its zero.
-        /// </para>
-        /// <para>
-        /// This is done to support SSH servers will a small window size that do not agressively
-        /// increase their window size. We need to take into account that there may be SSH
-        /// servers that only increase their window size when it has reached zero.
-        /// </para>
-        /// </remarks>
-        protected void SendMessage(ChannelExtendedDataMessage message)
-        {
-            // send channel messages only while channel is open
-            if (!IsOpen)
-                return;
-
-            var totalDataLength = message.Data.Length;
-            var totalDataSent = 0;
-
-            var totalBytesToSend = totalDataLength;
-            while (totalBytesToSend > 0)
-            {
-                var dataThatCanBeSentInMessage = GetDataLengthThatCanBeSentInMessage(totalBytesToSend);
-                if (dataThatCanBeSentInMessage == totalDataLength)
-                {
-                    // we can send the message in one chunk
-                    _session.SendMessage(message);
-                }
-                else
-                {
-                    // we need to send the message in multiple chunks
-                    var dataToSend = new byte[dataThatCanBeSentInMessage];
-                    Array.Copy(message.Data, totalDataSent, dataToSend, 0, dataThatCanBeSentInMessage);
-                    _session.SendMessage(new ChannelExtendedDataMessage(message.LocalChannelNumber,
-                        message.DataTypeCode, dataToSend));
-                }
-                totalDataSent += dataThatCanBeSentInMessage;
-                totalBytesToSend -= dataThatCanBeSentInMessage;
-            }
         }
 
         /// <summary>
@@ -659,7 +556,14 @@ namespace Renci.SshNet.Channels
             // the channel, or as response to a SSH_MSG_CHANNEL_CLOSE message sent by the server
             if (wait && _closeMessageSent == Sent)
             {
-                WaitOnHandle(_channelClosedWaitHandle);
+                try
+                {
+                    WaitOnHandle(_channelClosedWaitHandle);
+                }
+                catch (SshConnectionException)
+                {
+                    // ignore connection failures as we're closing the channel anyway
+                }
             }
 
             // reset indicators in case we want to reopen the channel; these are safe to reset
@@ -809,11 +713,10 @@ namespace Renci.SshNet.Channels
             {
                 try
                 {
-                    if (_session.ConnectionInfo.ChannelRequests.ContainsKey(e.Message.RequestName))
-                    {
-                        //  Get request specific class
-                        var requestInfo = _session.ConnectionInfo.ChannelRequests[e.Message.RequestName];
+                    RequestInfo requestInfo;
 
+                    if (_session.ConnectionInfo.ChannelRequests.TryGetValue(e.Message.RequestName, out requestInfo))
+                    {
                         //  Load request specific data
                         requestInfo.Load(e.Message.RequestData);
 
@@ -863,7 +766,7 @@ namespace Renci.SshNet.Channels
             }
         }
 
-        #endregion
+        #endregion // Channel message event handlers
 
         private void AdjustDataWindow(byte[] messageData)
         {
@@ -909,12 +812,12 @@ namespace Renci.SshNet.Channels
             } while (true);
         }
 
-        private InvalidOperationException CreateRemoteChannelInfoNotAvailableException()
+        private static InvalidOperationException CreateRemoteChannelInfoNotAvailableException()
         {
             throw new InvalidOperationException("The channel has not been opened, or the open has not yet been confirmed.");
         }
 
-        private InvalidOperationException CreateChannelClosedException()
+        private static InvalidOperationException CreateChannelClosedException()
         {
             throw new InvalidOperationException("The channel is closed.");
         }
@@ -938,42 +841,48 @@ namespace Renci.SshNet.Channels
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (_isDisposed)
+                return;
+
+            if (disposing)
             {
-                if (disposing)
+                Close(false);
+
+                var session = _session;
+                if (session != null)
                 {
-                    Close(false);
+                    _session = null;
+                    session.ChannelWindowAdjustReceived -= OnChannelWindowAdjust;
+                    session.ChannelDataReceived -= OnChannelData;
+                    session.ChannelExtendedDataReceived -= OnChannelExtendedData;
+                    session.ChannelEofReceived -= OnChannelEof;
+                    session.ChannelCloseReceived -= OnChannelClose;
+                    session.ChannelRequestReceived -= OnChannelRequest;
+                    session.ChannelSuccessReceived -= OnChannelSuccess;
+                    session.ChannelFailureReceived -= OnChannelFailure;
+                    session.ErrorOccured -= Session_ErrorOccured;
+                    session.Disconnected -= Session_Disconnected;
+                }
 
-                    if (_session != null)
-                    {
-                        _session.ChannelWindowAdjustReceived -= OnChannelWindowAdjust;
-                        _session.ChannelDataReceived -= OnChannelData;
-                        _session.ChannelExtendedDataReceived -= OnChannelExtendedData;
-                        _session.ChannelEofReceived -= OnChannelEof;
-                        _session.ChannelCloseReceived -= OnChannelClose;
-                        _session.ChannelRequestReceived -= OnChannelRequest;
-                        _session.ChannelSuccessReceived -= OnChannelSuccess;
-                        _session.ChannelFailureReceived -= OnChannelFailure;
-                        _session.ErrorOccured -= Session_ErrorOccured;
-                        _session.Disconnected -= Session_Disconnected;
-                        _session = null;
-                    }
+                var channelClosedWaitHandle = _channelClosedWaitHandle;
+                if (channelClosedWaitHandle != null)
+                {
+                    _channelClosedWaitHandle = null;
+                    channelClosedWaitHandle.Dispose();
+                }
 
-                    if (_channelClosedWaitHandle != null)
-                    {
-                        _channelClosedWaitHandle.Dispose();
-                        _channelClosedWaitHandle = null;
-                    }
-                    if (_channelServerWindowAdjustWaitHandle != null)
-                    {
-                        _channelServerWindowAdjustWaitHandle.Dispose();
-                        _channelServerWindowAdjustWaitHandle = null;
-                    }
-                    if (_errorOccuredWaitHandle != null)
-                    {
-                        _errorOccuredWaitHandle.Dispose();
-                        _errorOccuredWaitHandle = null;
-                    }
+                var channelServerWindowAdjustWaitHandle = _channelServerWindowAdjustWaitHandle;
+                if (channelServerWindowAdjustWaitHandle != null)
+                {
+                    _channelServerWindowAdjustWaitHandle = null;
+                    channelServerWindowAdjustWaitHandle.Dispose();
+                }
+
+                var errorOccuredWaitHandle = _errorOccuredWaitHandle;
+                if (errorOccuredWaitHandle != null)
+                {
+                    _errorOccuredWaitHandle = null;
+                    errorOccuredWaitHandle.Dispose();
                 }
 
                 _isDisposed = true;
@@ -986,12 +895,9 @@ namespace Renci.SshNet.Channels
         /// </summary>
         ~Channel()
         {
-            // Do not re-create Dispose clean-up code here.
-            // Calling Dispose(false) is optimal in terms of
-            // readability and maintainability.
             Dispose(false);
         }
 
-        #endregion
+        #endregion // IDisposable Members
     }
 }

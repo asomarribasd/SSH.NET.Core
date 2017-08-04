@@ -122,7 +122,7 @@ namespace Renci.SshNet
         /// Occurs when an error occurred.
         /// </summary>
         /// <example>
-        ///   <code source="..\..\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect ErrorOccurred" language="C#" title="Handle ErrorOccurred event" />
+        ///   <code source="..\..\src\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect ErrorOccurred" language="C#" title="Handle ErrorOccurred event" />
         /// </example>
         public event EventHandler<ExceptionEventArgs> ErrorOccurred;
 
@@ -130,7 +130,7 @@ namespace Renci.SshNet
         /// Occurs when host key received.
         /// </summary>
         /// <example>
-        ///   <code source="..\..\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect HostKeyReceived" language="C#" title="Handle HostKeyReceived event" />
+        ///   <code source="..\..\src\Renci.SshNet.Tests\Classes\SshClientTest.cs" region="Example SshClient Connect HostKeyReceived" language="C#" title="Handle HostKeyReceived event" />
         /// </example>
         public event EventHandler<HostKeyEventArgs> HostKeyReceived;
 
@@ -139,7 +139,7 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="connectionInfo">The connection info.</param>
         /// <param name="ownsConnectionInfo">Specified whether this instance owns the connection info.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is null.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="connectionInfo"/> is <c>null</c>.</exception>
         /// <remarks>
         /// If <paramref name="ownsConnectionInfo"/> is <c>true</c>, then the
         /// connection info will be disposed when this instance is disposed.
@@ -313,7 +313,7 @@ namespace Renci.SshNet
         private bool _isDisposed;
 
         /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged ResourceMessages.
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public void Dispose()
         {
@@ -324,22 +324,22 @@ namespace Renci.SshNet
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged ResourceMessages.</param>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!_isDisposed)
-            {
-                if (disposing)
-                {
-                    Disconnect();
+            if (_isDisposed)
+                return;
 
-                    if (_ownsConnectionInfo && _connectionInfo != null)
-                    {
-                        var connectionInfoDisposable = _connectionInfo as IDisposable;
-                        if (connectionInfoDisposable != null)
-                            connectionInfoDisposable.Dispose();
-                        _connectionInfo = null;
-                    }
+            if (disposing)
+            {
+                Disconnect();
+
+                if (_ownsConnectionInfo && _connectionInfo != null)
+                {
+                    var connectionInfoDisposable = _connectionInfo as IDisposable;
+                    if (connectionInfoDisposable != null)
+                        connectionInfoDisposable.Dispose();
+                    _connectionInfo = null;
                 }
 
                 _isDisposed = true;
@@ -362,9 +362,6 @@ namespace Renci.SshNet
         /// </summary>
         ~BaseClient()
         {
-            // Do not re-create Dispose clean-up code here.
-            // Calling Dispose(false) is optimal in terms of
-            // readability and maintainability.
             Dispose(false);
         }
 
@@ -379,10 +376,7 @@ namespace Renci.SshNet
             if (_keepAliveTimer == null)
                 return;
 
-            var timerDisposed = new ManualResetEvent(false);
-            _keepAliveTimer.Dispose(timerDisposed);
-            timerDisposed.WaitOne();
-            timerDisposed.Dispose();
+            _keepAliveTimer.Dispose();
             _keepAliveTimer = null;
         }
 
@@ -418,9 +412,11 @@ namespace Renci.SshNet
             if (_keepAliveInterval == SshNet.Session.InfiniteTimeSpan)
                 return;
 
-            if (_keepAliveTimer == null)
-                _keepAliveTimer = new Timer(state => SendKeepAliveMessage());
-            _keepAliveTimer.Change(_keepAliveInterval, _keepAliveInterval);
+            if (_keepAliveTimer != null)
+                // timer is already started
+                return;
+
+            _keepAliveTimer = new Timer(state => SendKeepAliveMessage(), null, _keepAliveInterval, _keepAliveInterval);
         }
     }
 }

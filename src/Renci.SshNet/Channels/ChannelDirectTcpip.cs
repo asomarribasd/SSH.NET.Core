@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Renci.SshNet.Abstractions;
 using Renci.SshNet.Common;
 using Renci.SshNet.Messages.Connection;
 
@@ -11,7 +11,7 @@ namespace Renci.SshNet.Channels
     /// <summary>
     /// Implements "direct-tcpip" SSH channel.
     /// </summary>
-    internal partial class ChannelDirectTcpip : ClientChannel, IChannelDirectTcpip
+    internal class ChannelDirectTcpip : ClientChannel, IChannelDirectTcpip
     {
         private readonly object _socketLock = new object();
 
@@ -54,12 +54,11 @@ namespace Renci.SshNet.Channels
             _forwardedPort = forwardedPort;
             _forwardedPort.Closing += ForwardedPort_Closing;
 
-            var ep = socket.RemoteEndPoint as IPEndPoint;
+            var ep = (IPEndPoint) socket.RemoteEndPoint;
 
             // open channel
             SendMessage(new ChannelOpenMessage(LocalChannelNumber, LocalWindowSize, LocalPacketSize,
                 new DirectTcpipChannelInfo(remoteHost, port, ep.Address.ToString(), (uint) ep.Port)));
-
             //  Wait for channel to open
             WaitOnHandle(_channelOpen);
         }
@@ -69,11 +68,13 @@ namespace Renci.SshNet.Channels
         /// </summary>
         private void ForwardedPort_Closing(object sender, EventArgs eventArgs)
         {
-            // signal to the client that we will not send anything anymore; this will also interrupt the
+            // signal to the client that we will not send anything anymore; this should also interrupt the
             // blocking receive in Bind if the client sends FIN/ACK in time
-            //
-            // if the FIN/ACK is not sent in time, the socket will be closed in Close(bool)
             ShutdownSocket(SocketShutdown.Send);
+
+            // if the FIN/ACK is not sent in time by the remote client, then interrupt the blocking receive
+            // by closing the socket
+            CloseSocket();
         }
 
         /// <summary>
@@ -87,49 +88,7 @@ namespace Renci.SshNet.Channels
 
             var buffer = new byte[RemotePacketSize];
 
-            while (_socket != null && _socket.Connected)
-            {
-                try
-                {
-                    var read = 0;
-                    InternalSocketReceive(buffer, ref read);
-                    if (read > 0)
-                    {
-#if TUNING
-                        SendData(buffer, 0, read);
-#else
-                        SendMessage(new ChannelDataMessage(RemoteChannelNumber, buffer.Take(read).ToArray()));
-#endif
-                    }
-                    else
-                    {
-                        // client shut down the socket (but the server may still send data or an EOF)
-                        break;
-                    }
-                }
-                catch (SocketException exp)
-                {
-                    switch (exp.SocketErrorCode)
-                    {
-                        case SocketError.WouldBlock:
-                        case SocketError.IOPending:
-                        case SocketError.NoBufferSpaceAvailable:
-                            // socket buffer is probably empty, wait and try again
-                            Thread.Sleep(30);
-                            break;
-                        case SocketError.ConnectionAborted:
-                        case SocketError.ConnectionReset:
-                            // connection was closed after receiving SSH_MSG_CHANNEL_CLOSE message
-                            break;
-                        case SocketError.Interrupted:
-                            // connection was closed because FIN/ACK was not received in time after
-                            // shutting down the (send part of the) socket
-                            break;
-                        default:
-                            throw; // throw any other error
-                    }
-                }
-            }
+            SocketAbstraction.ReadContinuous(_socket, buffer, 0, buffer.Length, SendData);
 
             // even though the client has disconnected, we still want to properly close the
             // channel
@@ -154,7 +113,7 @@ namespace Renci.SshNet.Channels
 
                 // closing a socket actually disposes the socket, so we can safely dereference
                 // the field to avoid entering the lock again later
-                _socket.Close();
+                _socket.Dispose();
                 _socket = null;
             }
         }
@@ -184,9 +143,10 @@ namespace Renci.SshNet.Channels
         /// <param name="wait"><c>true</c> to wait for the SSH_MSG_CHANNEL_CLOSE message to be received from the server; otherwise, <c>false</c>.</param>
         protected override void Close(bool wait)
         {
-            if (_forwardedPort != null)
+            var forwardedPort = _forwardedPort;
+            if (forwardedPort != null)
             {
-                _forwardedPort.Closing -= ForwardedPort_Closing;
+                forwardedPort.Closing -= ForwardedPort_Closing;
                 _forwardedPort = null;
             }
 
@@ -217,7 +177,7 @@ namespace Renci.SshNet.Channels
                 {
                     if (_socket != null && _socket.Connected)
                     {
-                        InternalSocketSend(data);
+                        SocketAbstraction.Send(_socket, data, 0, data.Length);
                     }
                 }
             }
@@ -294,10 +254,6 @@ namespace Renci.SshNet.Channels
             ShutdownSocket(SocketShutdown.Both);
         }
 
-        partial void InternalSocketReceive(byte[] buffer, ref int read);
-
-        partial void InternalSocketSend(byte[] data);
-
         protected override void Dispose(bool disposing)
         {
             // make sure we've unsubscribed from all session events and closed the channel
@@ -318,16 +274,18 @@ namespace Renci.SshNet.Channels
                     }
                 }
 
-                if (_channelOpen != null)
+                var channelOpen = _channelOpen;
+                if (channelOpen != null)
                 {
-                    _channelOpen.Dispose();
                     _channelOpen = null;
+                    channelOpen.Dispose();
                 }
 
-                if (_channelData != null)
+                var channelData = _channelData;
+                if (channelData != null)
                 {
-                    _channelData.Dispose();
                     _channelData = null;
+                    channelData.Dispose();
                 }
             }
         }

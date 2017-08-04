@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using Renci.SshNet.Channels;
 using System.IO;
 using Renci.SshNet.Common;
@@ -20,8 +19,8 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="fileInfo">The file system info.</param>
         /// <param name="path">The path.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="fileInfo" /> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="path"/> is null or empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="fileInfo" /> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="path"/> is <c>null</c> or empty.</exception>
         public void Upload(FileInfo fileInfo, string path)
         {
             if (fileInfo == null)
@@ -32,12 +31,7 @@ namespace Renci.SshNet
             using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 if (!channel.SendExecRequest(string.Format("scp -t \"{0}\"", path)))
@@ -57,7 +51,7 @@ namespace Renci.SshNet
         /// <param name="directoryInfo">The directory info.</param>
         /// <param name="path">The path.</param>
         /// <exception cref="ArgumentNullException">fileSystemInfo</exception>
-        /// <exception cref="ArgumentException"><paramref name="path"/> is null or empty.</exception>
+        /// <exception cref="ArgumentException"><paramref name="path"/> is <c>null</c> or empty.</exception>
         public void Upload(DirectoryInfo directoryInfo, string path)
         {
             if (directoryInfo == null)
@@ -65,15 +59,10 @@ namespace Renci.SshNet
             if (string.IsNullOrEmpty(path))
                 throw new ArgumentException("path");
 
-            using (var input = new PipeStream())
+            using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 //  Send channel command request
@@ -98,8 +87,8 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="filename">Remote host file name.</param>
         /// <param name="fileInfo">Local file information.</param>
-        /// <exception cref="ArgumentNullException"><paramref name="fileInfo"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="filename"/> is null or empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="fileInfo"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="filename"/> is <c>null</c> or empty.</exception>
         public void Download(string filename, FileInfo fileInfo)
         {
             if (string.IsNullOrEmpty(filename))
@@ -107,15 +96,10 @@ namespace Renci.SshNet
             if (fileInfo == null)
                 throw new ArgumentNullException("fileInfo");
 
-            using (var input = new PipeStream())
+            using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 //  Send channel command request
@@ -133,8 +117,8 @@ namespace Renci.SshNet
         /// </summary>
         /// <param name="directoryName">Remote host directory name.</param>
         /// <param name="directoryInfo">Local directory information.</param>
-        /// <exception cref="ArgumentException"><paramref name="directoryName"/> is null or empty.</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="directoryInfo"/> is null.</exception>
+        /// <exception cref="ArgumentException"><paramref name="directoryName"/> is <c>null</c> or empty.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="directoryInfo"/> is <c>null</c>.</exception>
         public void Download(string directoryName, DirectoryInfo directoryInfo)
         {
             if (string.IsNullOrEmpty(directoryName))
@@ -142,15 +126,10 @@ namespace Renci.SshNet
             if (directoryInfo == null)
                 throw new ArgumentNullException("directoryInfo");
 
-            using (var input = new PipeStream())
+            using (var input = ServiceFactory.CreatePipeStream())
             using (var channel = Session.CreateChannelSession())
             {
-                channel.DataReceived += delegate(object sender, ChannelDataEventArgs e)
-                {
-                    input.Write(e.Data, 0, e.Data.Length);
-                    input.Flush();
-                };
-
+                channel.DataReceived += (sender, e) => input.Write(e.Data, 0, e.Data.Length);
                 channel.Open();
 
                 //  Send channel command request
@@ -295,11 +274,6 @@ namespace Renci.SshNet
 
                 SendConfirmation(channel, 1, string.Format("\"{0}\" is not valid protocol message.", message));
             }
-        }
-
-        partial void SendData(IChannelSession channel, string command)
-        {
-            channel.SendData(Encoding.Default.GetBytes(command));
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿#if !FEATURE_ENCODING_ASCII
+
+using System;
+using System.Text;
 
 namespace Renci.SshNet.Common
 {
@@ -41,13 +44,8 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The number of bytes produced by encoding the specified characters.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException">
-        ///   <paramref name="chars"/> is null. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="index"/> or <paramref name="count"/> is less than zero.-or- <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in <paramref name="chars"/>. </exception>
-        ///   
-        /// <exception cref="T:System.Text.EncoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.EncoderFallback"/> is set to <see cref="T:System.Text.EncoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="chars"/> is  <c>null</c>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than zero.-or- <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in <paramref name="chars"/>.</exception>
         public override int GetByteCount(char[] chars, int index, int count)
         {
             return count;
@@ -64,16 +62,9 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The actual number of bytes written into <paramref name="bytes"/>.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException">
-        ///   <paramref name="chars"/> is null.-or- <paramref name="bytes"/> is null. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="charIndex"/> or <paramref name="charCount"/> or <paramref name="byteIndex"/> is less than zero.-or- <paramref name="charIndex"/> and <paramref name="charCount"/> do not denote a valid range in <paramref name="chars"/>.-or- <paramref name="byteIndex"/> is not a valid index in <paramref name="bytes"/>. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentException">
-        ///   <paramref name="bytes"/> does not have enough capacity from <paramref name="byteIndex"/> to the end of the array to accommodate the resulting bytes. </exception>
-        ///   
-        /// <exception cref="T:System.Text.EncoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.EncoderFallback"/> is set to <see cref="T:System.Text.EncoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="chars"/> is  <c>null</c>.-or- <paramref name="bytes"/> is  <c>null</c>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="charIndex"/> or <paramref name="charCount"/> or <paramref name="byteIndex"/> is less than zero.-or- <paramref name="charIndex"/> and <paramref name="charCount"/> do not denote a valid range in <paramref name="chars"/>.-or- <paramref name="byteIndex"/> is not a valid index in <paramref name="bytes"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="bytes"/> does not have enough capacity from <paramref name="byteIndex"/> to the end of the array to accommodate the resulting bytes.</exception>
         public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
         {
             for (var i = 0; i < charCount && i < chars.Length; i++)
@@ -97,13 +88,8 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The number of characters produced by decoding the specified sequence of bytes.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException">
-        ///   <paramref name="bytes"/> is null. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="index"/> or <paramref name="count"/> is less than zero.-or- <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in <paramref name="bytes"/>. </exception>
-        ///   
-        /// <exception cref="T:System.Text.DecoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.DecoderFallback"/> is set to <see cref="T:System.Text.DecoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> or <paramref name="count"/> is less than zero.-or- <paramref name="index"/> and <paramref name="count"/> do not denote a valid range in <paramref name="bytes"/>.</exception>
         public override int GetCharCount(byte[] bytes, int index, int count)
         {
             return count;
@@ -120,16 +106,9 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The actual number of characters written into <paramref name="chars"/>.
         /// </returns>
-        /// <exception cref="T:System.ArgumentNullException">
-        ///   <paramref name="bytes"/> is null.-or- <paramref name="chars"/> is null. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="byteIndex"/> or <paramref name="byteCount"/> or <paramref name="charIndex"/> is less than zero.-or- <paramref name="byteIndex"/> and <paramref name="byteCount"/> do not denote a valid range in <paramref name="bytes"/>.-or- <paramref name="charIndex"/> is not a valid index in <paramref name="chars"/>. </exception>
-        ///   
-        /// <exception cref="T:System.ArgumentException">
-        ///   <paramref name="chars"/> does not have enough capacity from <paramref name="charIndex"/> to the end of the array to accommodate the resulting characters. </exception>
-        ///   
-        /// <exception cref="T:System.Text.DecoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.DecoderFallback"/> is set to <see cref="T:System.Text.DecoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is  <c>null</c>.-or- <paramref name="chars"/> is  <c>null</c>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="byteIndex"/> or <paramref name="byteCount"/> or <paramref name="charIndex"/> is less than zero.-or- <paramref name="byteIndex"/> and <paramref name="byteCount"/> do not denote a valid range in <paramref name="bytes"/>.-or- <paramref name="charIndex"/> is not a valid index in <paramref name="chars"/>.</exception>
+        /// <exception cref="ArgumentException"><paramref name="chars"/> does not have enough capacity from <paramref name="charIndex"/> to the end of the array to accommodate the resulting characters.</exception>
         public override int GetChars(byte[] bytes, int byteIndex, int byteCount, char[] chars, int charIndex)
         {
             for (var i = 0; i < byteCount; i++)
@@ -158,13 +137,13 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The maximum number of bytes produced by encoding the specified number of characters.
         /// </returns>
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="charCount"/> is less than zero. </exception>
-        ///   
-        /// <exception cref="T:System.Text.EncoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.EncoderFallback"/> is set to <see cref="T:System.Text.EncoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="charCount"/> is less than zero.</exception>
         public override int GetMaxByteCount(int charCount)
         {
-            return charCount;
+            if (charCount < 0)
+                throw new ArgumentOutOfRangeException("charCount", "Non-negative number required.");
+
+            return charCount + 1;
         }
 
         /// <summary>
@@ -174,13 +153,15 @@ namespace Renci.SshNet.Common
         /// <returns>
         /// The maximum number of characters produced by decoding the specified number of bytes.
         /// </returns>
-        /// <exception cref="T:System.ArgumentOutOfRangeException">
-        ///   <paramref name="byteCount"/> is less than zero. </exception>
-        ///   
-        /// <exception cref="T:System.Text.DecoderFallbackException">A fallback occurred (see Understanding Encodings for complete explanation)-and-<see cref="P:System.Text.Encoding.DecoderFallback"/> is set to <see cref="T:System.Text.DecoderExceptionFallback"/>.</exception>
+        /// <exception cref="ArgumentOutOfRangeException"><paramref name="byteCount"/> is less than zero.</exception>
         public override int GetMaxCharCount(int byteCount)
         {
+            if (byteCount < 0)
+                throw new ArgumentOutOfRangeException("byteCount", "Non-negative number required.");
+
             return byteCount;
         }
     }
 }
+
+#endif // !FEATURE_ENCODING_ASCII
