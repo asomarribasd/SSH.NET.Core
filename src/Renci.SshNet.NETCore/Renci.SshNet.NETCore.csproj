@@ -17,9 +17,12 @@
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <AssemblyVersion>2016.0.1.0</AssemblyVersion>
+    <FileVersion>2016.0.1.0</FileVersion>
+    <Version>2016.0.1.0</Version>
+    <!--<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>-->
   </PropertyGroup>
 
   <ItemGroup>
